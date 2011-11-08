@@ -1,8 +1,15 @@
 ## package.skeleton(name="rstpm2", path="c:/usr/src/R", force=T, namespace=T, code_files="pm2-3.R")
+## Windows:
 ## Rtools.bat
 ## R CMD INSTALL --html "c:/usr/src/R/rstpm2/pkg"
 ## R CMD build "c:/usr/src/R/rstpm2/pkg"
 ## R CMD build --binary "c:/usr/src/R/rstpm2/pkg"
+##
+## Unix:
+## R CMD INSTALL --html ~/src/R/rstpm2/pkg --library=~/R/x86_64-pc-linux-gnu-library/2.12
+## R CMD build ~/src/R/rstpm2/pkg
+## R CMD build --binary ~/src/R/rstpm2/pkg
+##
 ## testPackage <- TRUE
 ## if (testPackage) {
 ##   require(splines)
