@@ -1,0 +1,30 @@
+[OPTIONS]
+Auto Index=Yes
+Contents file=Rstpm2.toc
+Compatibility=1.1 or later
+Compiled file=Rstpm2.chm
+Default topic=00Index.html
+Display compile progress=No
+Full-text search=Yes
+Full text search stop list file=..\..\..\gnuwin32\help\R.stp
+Title=R Help for package Rstpm2
+
+
+[FILES]
+00Index.html
+Rstpm2-package.html
+grad.html
+incrVar.html
+lhs.html
+lhs_-.html
+numDeltaMethod.html
+plot-methods.html
+predict-methods.html
+predict.nsDeriv.html
+predictnl-methods.html
+predictnl.default.html
+predictnl.html
+rhs.html
+rhs_-.html
+stpm2-class.html
+stpm2.html
