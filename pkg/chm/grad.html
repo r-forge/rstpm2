@@ -1,0 +1,77 @@
+<html><head><title>gradient function</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" href="Rchm.css">
+</head>
+<body>
+
+<table width="100%"><tr><td>grad(Rstpm2)</td><td align="right">R Documentation</td></tr></table><object type="application/x-oleobject" classid="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+<param name="keyword" value="R:   grad">
+<param name="keyword" value=" gradient function">
+</object>
+
+
+<h2>gradient function</h2>
+
+
+<h3>Usage</h3>
+
+<pre>
+grad(func, x, ...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>func</code></td>
+<td>
+</td></tr>
+<tr valign="top"><td><code>x</code></td>
+<td>
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+</td></tr>
+</table>
+
+<h3>Examples</h3>
+
+<pre>
+##---- Should be DIRECTLY executable !! ----
+##-- ==&gt;  Define data, use random,
+##--    or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (func, x, ...) 
+{
+    h &lt;- .Machine$double.eps^(1/3) * ifelse(abs(x) &gt; 1, abs(x), 
+        1)
+    temp &lt;- x + h
+    h.hi &lt;- temp - x
+    temp &lt;- x - h
+    h.lo &lt;- x - temp
+    twoeps &lt;- h.hi + h.lo
+    nx &lt;- length(x)
+    ny &lt;- length(func(x, ...))
+    if (ny == 0L) 
+        stop("Length of function equals 0")
+    df &lt;- if (ny == 1L) 
+        rep(NA, nx)
+    else matrix(NA, nrow = nx, ncol = ny)
+    for (i in 1L:nx) {
+        hi &lt;- lo &lt;- x
+        hi[i] &lt;- x[i] + h.hi[i]
+        lo[i] &lt;- x[i] - h.lo[i]
+        if (ny == 1L) 
+            df[i] &lt;- (func(hi, ...) - func(lo, ...))/twoeps[i]
+        else df[i, ] &lt;- (func(hi, ...) - func(lo, ...))/twoeps[i]
+    }
+    return(df)
+  }
+</pre>
+
+
+
+<hr><div align="center">[Package <em>Rstpm2</em> version 1.1.1 <a href="00Index.html">Index</a>]</div>
+
+</body></html>

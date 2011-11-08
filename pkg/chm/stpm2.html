@@ -1,0 +1,268 @@
+<html><head><title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" href="Rchm.css">
+</head>
+<body>
+
+<table width="100%"><tr><td>stpm2(Rstpm2)</td><td align="right">R Documentation</td></tr></table><object type="application/x-oleobject" classid="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+<param name="keyword" value="R:   stpm2">
+<param name="keyword" value=" ">
+</object>
+
+
+<h2></h2>
+
+
+<h3>Usage</h3>
+
+<pre>
+stpm2(formula, data, df = 3, logH.args = NULL, logH.formula = NULL, tvc = NULL, tvc.formula = NULL, bhazard = NULL, contrasts = NULL, ...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>formula</code></td>
+<td>
+a formula object, with the response on the left of a <code>~</code> operator, and
+the terms on the right.  The response must be a survival object as
+returned by the <code><a onclick="findlink('survival', 'Surv.html')" style="text-decoration: underline; color: blue; cursor: hand">Surv</a></code> function. The terms should include linear
+terms for any time-varying coefficients. [required]
+</td></tr>
+<tr valign="top"><td><code>data</code></td>
+<td>
+a data.frame in which to interpret the variables named in
+the <code>formula</code> argument. [at present: required]
+</td></tr>
+<tr valign="top"><td><code>df</code></td>
+<td>
+an integer that describes the degrees of freedom for the <code>ns</code>
+function for modelling the baseline log-cumulative hazard (default=3). 
+</td></tr>
+<tr valign="top"><td><code>logH.args</code></td>
+<td>
+a list describing the arguments for the <code>ns</code> function for modelling
+the baseline log-cumulative hazard (default=NULL). Use this for
+changing the knot placement.
+</td></tr>
+<tr valign="top"><td><code>logH.formula</code></td>
+<td>
+a formula for describing the baseline log-cumulative hazard function
+(default=NULL). Only one of <code>df</code>, <code>logH.args</code> or
+<code>logH.formula</code> is required.
+</td></tr>
+<tr valign="top"><td><code>tvc</code></td>
+<td>
+a list with the names of the time-varying coefficients and the degrees
+of freedom (e.g. <code>tvc=list(x=3)</code> specifies <code>x</code> as a time-varying
+coefficient with 3 degrees of freedom).
+</td></tr>
+<tr valign="top"><td><code>tvc.formula</code></td>
+<td>
+a formula for describing the time-varying coefficients. If a
+time-varying coefficient is being model, then only one of
+<code>tvc</code> and <code>tvc.formula</code> is required.
+</td></tr>
+<tr valign="top"><td><code>bhazard</code></td>
+<td>
+a vector for the background hazard for relative survival estimation. At
+present, this does not use <code>data</code>. At present, this is required for
+all individuals - although it is only used at the event times.
+</td></tr>
+<tr valign="top"><td><code>contrasts</code></td>
+<td>
+an optional list. See the <code>contrasts.arg</code>
+of <code><a onclick="findlink('stats', 'model.matrix.html')" style="text-decoration: underline; color: blue; cursor: hand">model.matrix.default</a></code>.
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+additional arguments to be passed to the <code><a onclick="findlink('bbmle', 'mle2.html')" style="text-decoration: underline; color: blue; cursor: hand">mle2</a></code> .
+</td></tr>
+</table>
+
+<h3>Details</h3>
+
+<p>
+The implementation extends the <code>mle2</code> object from the
+<code>bbmle</code> package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>
+An <code><a href="stpm2-class.html">stpm2-class</a></code> object.</p>
+
+<h3>Examples</h3>
+
+<pre>
+data(brcancer)
+summary(fit &lt;- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=3))
+
+## some predictions
+head(predict(fit,se.fit=T,type="surv"))
+head(predict(fit,se.fit=T,type="hazard"))
+
+## some plots
+plot(fit,newdata=data.frame(hormon=0),type="hazard")
+plot(fit,newdata=data.frame(hormon=0),type="surv")
+
+## time-varying coefficient
+summary(fit.tvc &lt;- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=3,
+                     tvc=list(hormon=3)))
+anova(fit,fit.tvc) # compare with and without tvc
+
+## some more plots
+plot(fit.tvc,newdata=data.frame(hormon=0),type="hr",var="hormon")
+                                        # no lines method: use add=TRUE
+plot(fit.tvc,newdata=data.frame(hormon=1),type="hr",var="hormon",
+     add=TRUE,ci=FALSE,line.col=2)
+
+plot(fit.tvc,newdata=data.frame(hormon=0),type="sdiff",var="hormon")
+
+plot(fit.tvc,newdata=data.frame(hormon=0),type="hdiff",var="hormon")
+
+plot(fit.tvc,newdata=data.frame(hormon=0),type="hazard")
+plot(fit.tvc,newdata=data.frame(hormon=1),type="hazard",line.col=2,ci=FALSE,add=TRUE)
+
+## compare number of knots
+hormon0 &lt;- data.frame(hormon=0)
+plot(fit,type="hazard",newdata=hormon0)
+AIC(fit)
+for (df in 4:6) {
+    fit.new &lt;- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=df)
+    plot(fit.new,type="hazard",newdata=hormon0,add=T,ci=F,line.col=df)
+    print(AIC(fit.new))
+}
+
+## The function is currently defined as
+function (formula, data = NULL, df = 3, logH.args = NULL, logH.formula = NULL, 
+    tvc = NULL, tvc.formula = NULL, bhazard = NULL, contrasts = NULL, 
+    ...) 
+{
+    cl &lt;- match.call()
+    mf &lt;- match.call(expand.dots = FALSE)
+    m &lt;- match(c("formula", "data"), names(mf), 0L)
+    mf &lt;- mf[c(1L, m)]
+    mf$drop.unused.levels &lt;- TRUE
+    mf[[1L]] &lt;- as.name("model.frame")
+    eventExpression &lt;- lhs(formula)[[length(lhs(formula))]]
+    delayed &lt;- length(lhs(formula)) == 4
+    timevar &lt;- lhs(formula)[[if (delayed) 
+        3
+    else 2]]
+    if (is.null(logH.formula) &amp;&amp; is.null(logH.args)) 
+        logH.args$df &lt;- df
+    if (is.null(logH.formula)) 
+        logH.formula &lt;- as.formula(call("~", as.call(c(quote(ns), 
+            call("log", timevar), vector2call(logH.args)))))
+    full.formula &lt;- formula
+    rhs(full.formula) &lt;- rhs(formula) %call+% rhs(logH.formula)
+    if (is.null(tvc.formula) &amp;&amp; !is.null(tvc)) {
+        tvc.formulas &lt;- lapply(names(tvc), function(name) call(":", 
+            as.name(name), as.call(c(quote(ns), call("log", timevar), 
+                vector2call(list(df = tvc[[name]]))))))
+        if (length(tvc.formulas) &gt; 1) 
+            tvc.formulas &lt;- list(Reduce(`%call+%`, tvc.formulas))
+        tvc.formula &lt;- as.formula(call("~", tvc.formulas[[1]]))
+    }
+    if (!is.null(tvc.formula)) 
+        rhs(full.formula) &lt;- rhs(full.formula) %call+% rhs(tvc.formula)
+    logHD.formula = replaceFormula(logH.formula, quote(ns), quote(nsDeriv))
+    if (!is.null(tvc.formula)) {
+        tvcD.formula &lt;- replaceFormula(tvc.formula, quote(ns), 
+            quote(nsDeriv))
+        rhs(logHD.formula) &lt;- logHD.formula[[2]] %call+% tvcD.formula[[2]]
+    }
+    mf$formula = full.formula
+    mf$subset &lt;- eventExpression
+    mfd &lt;- mf
+    mf &lt;- eval(mf, parent.frame())
+    mt &lt;- attr(mf, "terms")
+    xlev &lt;- .getXlevels(mt, mf)
+    mfd[[2]] &lt;- logHD.formula
+    mfd &lt;- eval(mfd, parent.frame())
+    mtd &lt;- attr(mfd, "terms")
+    mfX &lt;- model.frame(mt, data, xlev = xlev)
+    if (!is.null(cl &lt;- attr(mt, "dataClasses"))) 
+        .checkMFClasses(cl, mfX)
+    X &lt;- model.matrix(mt, mfX, contrasts)
+    mfXD &lt;- model.frame(mtd, data, xlev = xlev)
+    if (!is.null(cl &lt;- attr(mtd, "dataClasses"))) 
+        .checkMFClasses(cl, mfXD)
+    XD &lt;- model.matrix(mtd, mfXD, contrasts)[, -1, drop = FALSE]
+    y &lt;- model.extract(mfX, "response")
+    if (!inherits(y, "Surv")) 
+        stop("Response must be a survival object")
+    type &lt;- attr(y, "type")
+    if (type != "right" &amp;&amp; type != "counting") 
+        stop(paste("stpm2 model doesn't support \"", type, "\" survival data", 
+            sep = ""))
+    event &lt;- y[, ncol(y)] == 1
+    time &lt;- y[, ncol(y) - 1]
+    coxph.obj &lt;- coxph(formula, data = data)
+    data$logHhat &lt;- log(-log(Shat(coxph.obj)))
+    lm.formula &lt;- full.formula
+    lhs(lm.formula) &lt;- quote(logHhat)
+    init &lt;- coef(lm(lm.formula, data[event, ], contrasts = contrasts))
+    indexXD &lt;- (length(coef(coxph.obj)) + 2):ncol(X)
+    bhazard &lt;- if (is.null(bhazard)) 
+        0
+    else bhazard[event]
+    if (delayed &amp;&amp; any(y[, 1] &gt; 0)) {
+        data2 &lt;- data[y[, 1] &gt; 0, , drop = FALSE]
+        y.call &lt;- lhs(full.formula)
+        delayed.formula &lt;- full.formula
+        lhs(delayed.formula) &lt;- NULL
+        data2[[deparse(y.call[[3]])]] &lt;- data2[[deparse(y.call[[2]])]]
+        mfX2 &lt;- model.frame(mt, data2, xlev = xlev)
+        if (!is.null(cl &lt;- attr(mt, "dataClasses"))) 
+            .checkMFClasses(cl, mfX2)
+        X2 &lt;- model.matrix(mt, mfX2, contrasts)[, -1, drop = FALSE]
+        negll &lt;- function(beta) {
+            eta &lt;- X %*% beta
+            eta2 &lt;- X2 %*% beta
+            h &lt;- (XD[event, ] %*% beta[indexXD]) * exp(eta[event])/time[event] + 
+                bhazard
+            h[h &lt; 0] &lt;- 1e-100
+            ll &lt;- sum(log(h)) + sum(exp(eta2)) - sum(exp(eta))
+            return(-ll)
+        }
+    }
+    else {
+        negll &lt;- function(beta) {
+            eta &lt;- X %*% beta
+            h &lt;- (XD[event, ] %*% beta[indexXD]) * exp(eta[event])/time[event] + 
+                bhazard
+            h[h &lt; 0] &lt;- 1e-100
+            ll &lt;- sum(log(h)) - sum(exp(eta))
+            return(-ll)
+        }
+    }
+    parnames(negll) &lt;- names(init)
+    mle2 &lt;- mle2(negll, init, vecpar = T, ...)
+    new("stpm2", call = mle2@call, call.orig = mle2@call, coef = mle2@coef, 
+        fullcoef = mle2@fullcoef, vcov = mle2@vcov, min = mle2@min, 
+        details = mle2@details, minuslogl = mle2@minuslogl, method = mle2@method, 
+        data = data, formula = mle2@formula, optimizer = "optim", 
+        xlevels = .getXlevels(mt, mf), contrasts = attr(X, "contrasts"), 
+        Call = cl, terms = mt, model.frame = mf, x = X, xd = XD, 
+        termsd = mtd, y = y)
+  }
+</pre>
+
+<script Language="JScript">
+function findlink(pkg, fn) {
+var Y, link;
+Y = location.href.lastIndexOf("\\") + 1;
+link = location.href.substring(0, Y);
+link = link + "../../" + pkg + "/chtml/" + pkg + ".chm::/" + fn;
+location.href = link;
+}
+</script>
+
+
+<hr><div align="center">[Package <em>Rstpm2</em> version 1.0 <a href="00Index.html">Index</a>]</div>
+
+</body></html>

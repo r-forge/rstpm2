@@ -1,0 +1,134 @@
+<html><head><title>plots for an stpm2 fit</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" href="Rchm.css">
+</head>
+<body>
+
+<table width="100%"><tr><td>plot-methods(Rstpm2)</td><td align="right">R Documentation</td></tr></table><object type="application/x-oleobject" classid="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+<param name="keyword" value="R:   plot-methods">
+<param name="keyword" value="R:   plot,stpm2-method">
+<param name="keyword" value=" plots for an stpm2 fit">
+</object>
+
+
+<h2>plots for an stpm2 fit</h2>
+
+
+<h3>Description</h3>
+
+<p>
+Given an <code>stpm2</code> fit, return a plot
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+
+    ## S4 method for signature 'stpm2':
+    plot(x,y,newdata,type="surv",
+                      xlab="Time",line.col=1,ci.col="grey",
+                      add=FALSE,ci=TRUE,rug=TRUE,
+                      var=NULL,...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>x</code></td>
+<td>
+an <code>stpm2</code> object</td></tr>
+<tr valign="top"><td><code>y</code></td>
+<td>
+not used (for generic compatibility)</td></tr>
+<tr valign="top"><td><code>newdata</code></td>
+<td>
+required list of new data. This defines the unexposed
+newdata (<EM>excluding</EM> the event times).</td></tr>
+<tr valign="top"><td><code>type</code></td>
+<td>
+specify the type of prediction:
+<ul>
+<dt>"surv"</dt><dd>survival probabilities</dd>
+<dt>"cumhaz"</dt><dd>cumulative hazard</dd>
+<dt>"hazard"</dt><dd>hazard</dd>
+<dt>"hr"</dt><dd>hazard ratio</dd>
+<dt>"sdiff"</dt><dd>survival difference</dd>
+<dt>"hdiff"</dt><dd>hazard difference</dd>
+</ul>
+</td></tr>
+<tr valign="top"><td><code>xlab</code></td>
+<td>
+x-axis label</td></tr>
+<tr valign="top"><td><code>line.col</code></td>
+<td>
+line colour</td></tr>
+<tr valign="top"><td><code>ci.col</code></td>
+<td>
+confidence interval colour</td></tr>
+<tr valign="top"><td><code>ci</code></td>
+<td>
+whether to plot the confidence interval band (default=TRUE)</td></tr>
+<tr valign="top"><td><code>add</code></td>
+<td>
+whether to add to the current plot (<code>add=TRUE</code>) or make a new
+plot (<code>add=FALSE</code>) (default=FALSE)</td></tr>
+<tr valign="top"><td><code>rug</code></td>
+<td>
+whether to add a rug plot of the event times to the current
+plot (default=TRUE)</td></tr>
+<tr valign="top"><td><code>var</code></td>
+<td>
+specify the variable name or names for the
+exposed/unexposed (names are given as characters)</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+additional arguments (add to the <code>plot</code> command)</td></tr>
+</table>
+
+<h3>Methods</h3>
+
+<dl>
+<dt>x = "stpm2", y = "missing"</dt><dd>an <code>stpm2</code> fit</dd>
+</dl>
+
+<h3>See Also</h3>
+
+<p>
+<code><a href="stpm2.html">stpm2</a></code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+
+## The function is currently defined as
+setMethod("plot", signature(x="stpm2", y="missing"),
+          function(x,y,newdata,type="surv",
+                      xlab="Time",line.col=1,ci.col="grey",
+                      add=FALSE,ci=TRUE,rug=TRUE,
+                      var=NULL,...) {
+  y &lt;- predict(x,newdata,type=type,var=var,grid=T,se.fit=T)
+  ylab &lt;- switch(type,hr="Hazard ratio",hazard="Hazard",surv="Survival",
+                 sdiff="Survival difference",hdiff="Hazard difference")
+  xx &lt;- attr(y,"newdata")
+  xx &lt;- xx[,ncol(xx)]
+  if (!add) matplot(xx, y, type="n", xlab=xlab, ylab=ylab, ...)
+  if (ci) polygon(c(xx,rev(xx)), c(y[,2],rev(y[,3])), col=ci.col, border=NA)
+  lines(xx,y[,1],col=line.col)
+  if (rug) {
+      Y &lt;- x@y
+      eventTimes &lt;- Y[Y[,ncol(Y)]==1,ncol(Y)-1]
+      rug(eventTimes)
+    }
+})
+
+  </pre>
+
+
+
+<hr><div align="center">[Package <em>Rstpm2</em> version 1.0 <a href="00Index.html">Index</a>]</div>
+
+</body></html>

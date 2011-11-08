@@ -1,0 +1,83 @@
+\name{nsx}
+\alias{nsx}
+\title{Generate a Basis Matrix for Natural Cubic Splines (with eXtensions)}
+\description{
+  Generate the B-spline basis matrix for a natural cubic spline (with eXtensions).
+}
+\usage{
+nsx(x, df = NULL, knots = NULL, intercept = FALSE,
+    Boundary.knots = range(x), derivs = if (cure) c(2, 1) else c(2, 2),
+    log = FALSE, centre = FALSE, 
+    cure = FALSE, stata.stpm2.compatible = FALSE)
+}
+\arguments{
+  \item{x}{the predictor variable.  Missing values are allowed.}
+  \item{df}{degrees of freedom. One can supply \code{df} rather than
+    knots; \code{ns()} then chooses \code{df - 1 - intercept} knots at
+    suitably chosen quantiles of \code{x} (which will ignore missing values).}
+  \item{knots}{breakpoints that define the spline.  The default is no
+    knots; together with the natural boundary conditions this results in
+    a basis for linear regression on \code{x}.  Typical values are the
+    mean or median for one knot, quantiles for more knots.  See also
+    \code{Boundary.knots}.}
+  \item{intercept}{if \code{TRUE}, an intercept is included in the
+    basis; default is \code{FALSE}.}
+  \item{Boundary.knots}{boundary points at which to impose the natural
+    boundary conditions and anchor the B-spline basis (default the range
+    of the data).  If both \code{knots} and \code{Boundary.knots} are
+    supplied, the basis parameters do not depend on \code{x}. Data can
+    extend beyond \code{Boundary.knots}}
+  \item{derivs}{vector of length 2 giving the derivative constraint order at
+    the left and right boundary knots; an order of 2 gives a linear
+    constraint, while an order of 1 gives a constant constraint}
+  \item{log}{a Boolean indicating whether the underlying values have been
+    log transformed; used to calculate derivatives}
+  \item{centre}{if specified, then centre the splines at this value
+    (i.e. f(centre)=0) (default=FALSE)}
+  \item{cure}{a Boolean indicated whether to estimate cure; changes the
+    default derivs argument; defaults to FALSE}
+  \item{stata.stpm2.compatible}{a Boolean to determine whether to use
+    Stata stpm's default knot placement; defaults to FALSE}
+}
+\value{
+    A matrix of dimension \code{length(x) * df} where either \code{df} was
+    supplied or if \code{knots} were supplied,
+    \code{df = length(knots) + 1 + intercept}.
+    Attributes are returned that correspond to the arguments to \code{ns},
+    and explicitly give the \code{knots}, \code{Boundary.knots} etc for
+    use by \code{predict.nsx()}.
+
+    \code{nsx()} is based on the functions \code{\link{ns}} and \code{\link{spline.des}}.  It
+    generates a basis matrix for representing the family of
+    piecewise-cubic splines with the specified sequence of
+    interior knots, and the natural boundary conditions.  These enforce
+    the constraint that the function is linear beyond the boundary knots,
+    which can either be supplied, else default to the extremes of the
+    data.  A primary use is in modeling formula to directly specify a
+    natural spline term in a model.
+
+    The extensions from \code{\link{ns}} are: specification of the
+    derivative constraints at the boundary knots; whether to centre the
+    knots; and an indicator for a log-transformation of \code{x} for
+    calculating derivatives.
+}
+\seealso{
+  \code{\link{ns}}, \code{\link{bs}}, \code{predict.nsx}, \code{\link{SafePrediction}}
+}
+\references{
+  Hastie, T. J. (1992)
+  Generalized additive models.
+  Chapter 7 of \emph{Statistical Models in S}
+  eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.
+}
+\examples{
+require(stats); require(graphics)
+nsx(women$height, df = 5)
+summary(fm1 <- lm(weight ~ ns(height, df = 5), data = women))
+
+## example of safe prediction
+plot(women, xlab = "Height (in)", ylab = "Weight (lb)")
+ht <- seq(57, 73, length.out = 200)
+lines(ht, predict(fm1, data.frame(height=ht)))
+}
+\keyword{smooth}
