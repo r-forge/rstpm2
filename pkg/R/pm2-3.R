@@ -1,11 +1,11 @@
 ## package.skeleton(name="rstpm2", path="c:/usr/src/R", force=T, namespace=T, code_files="pm2-3.R")
-## Windows:
+## Local Windows setup:
 ## Rtools.bat
 ## R CMD INSTALL --html "c:/usr/src/R/rstpm2/pkg"
 ## R CMD build "c:/usr/src/R/rstpm2/pkg"
 ## R CMD build --binary "c:/usr/src/R/rstpm2/pkg"
 ##
-## Unix:
+## Local Ubuntu setup:
 ## R CMD INSTALL --html ~/src/R/rstpm2/pkg --library=~/R/x86_64-pc-linux-gnu-library/2.12
 ## R CMD build ~/src/R/rstpm2/pkg
 ## R CMD build --binary ~/src/R/rstpm2/pkg
@@ -191,77 +191,77 @@ predict.nsxDeriv <-
   do.call("nsxDeriv", a)
 }
 ##
-nslog <- 
-function (x, df = NULL, knots = NULL, intercept = FALSE,
-          Boundary.knots = range(log(x)),
-          derivs = if (cure) c(2,1) else c(2,2),
-          log=TRUE, # placemarker only (has no effect)
-          centre = FALSE, cure = FALSE, stata.stpm2.compatible=FALSE) 
-{
-    mf <- match.call(expand.dots = FALSE)
-    mf[[1L]] <- as.name("nsx")
-    mf[["x"]] <- call("log",substitute(x))
-    if (!is.null(knots))
-      mf[["knots"]] <- call("log",substitute(knots))
-    if (centre)
-      mf[["centre"]] <- call("log",substitute(centre))
-    mf[["log"]] <- TRUE
-    basis <- eval(mf, parent.frame())
-    class(basis) <- c("nslog", "basis", "matrix")
-    basis
-}
-makepredictcall.nslog <- 
-function (var, call) 
-{
-    if (as.character(call)[1L] != "nslog") 
-        return(call)
-    at <- attributes(var)[c("knots", "Boundary.knots", "intercept",
-                            "derivs", "centre", "log")]
-    xxx <- call[1L:2]
-    xxx[names(at)] <- at
-    xxx
-}
-predict.nslog <- 
-function (object, newx, ...) 
-{
-    if (missing(newx)) 
-        return(object)
-    a <- c(list(x = newx), attributes(object)[c("knots", "Boundary.knots", 
-        "intercept", "derivs", "centre", "log")])
-    do.call("nslog", a)
-}
-## first derivative of the nslog() function
-nslogDeriv<- 
-  function (x, ...) {
-    basis <- nslog(x, ...)
-    h <- .Machine$double.eps^(1/3)*ifelse(abs(x)>1,abs(x),1)
-    basisD <- apply(predict(basis,x+h)-predict(basis,x-h),2,
-                      function(u) u/(2*h))
-    ## basisD <- apply(basisD,2,function(y) y/x)
-    attributes(basisD) <- attributes(basis)
-    class(basisD) <- c("nslogDeriv", "basis")
-    basisD
-  }
-makepredictcall.nslogDeriv <- 
-  function (var, call) 
-{
-  if (as.character(call)[1L] != "nslogDeriv") 
-    return(call)
-  at <- attributes(var)[c("knots", "Boundary.knots", "intercept",
-                          "derivs", "centre", "log")]
-  xxx <- call[1L:2]
-  xxx[names(at)] <- at
-  xxx
-}
-predict.nslogDeriv <- 
-  function (object, newx, ...) 
-{
-  if (missing(newx)) 
-    return(object)
-  a <- c(list(x = newx), attributes(object)[c("knots", "Boundary.knots", 
-                "intercept", "derivs", "centre", "log")])
-  do.call("nslogDeriv", a)
-}
+## nslog <- 
+## function (x, df = NULL, knots = NULL, intercept = FALSE,
+##           Boundary.knots = range(log(x)),
+##           derivs = if (cure) c(2,1) else c(2,2),
+##           log=TRUE, # placemarker only (has no effect)
+##           centre = FALSE, cure = FALSE, stata.stpm2.compatible=FALSE) 
+## {
+##     mf <- match.call(expand.dots = FALSE)
+##     mf[[1L]] <- as.name("nsx")
+##     mf[["x"]] <- call("log",substitute(x))
+##     if (!is.null(knots))
+##       mf[["knots"]] <- call("log",substitute(knots))
+##     if (centre)
+##       mf[["centre"]] <- call("log",substitute(centre))
+##     mf[["log"]] <- TRUE
+##     basis <- eval(mf, parent.frame())
+##     class(basis) <- c("nslog", "basis", "matrix")
+##     basis
+## }
+## makepredictcall.nslog <- 
+## function (var, call) 
+## {
+##     if (as.character(call)[1L] != "nslog") 
+##         return(call)
+##     at <- attributes(var)[c("knots", "Boundary.knots", "intercept",
+##                             "derivs", "centre", "log")]
+##     xxx <- call[1L:2]
+##     xxx[names(at)] <- at
+##     xxx
+## }
+## predict.nslog <- 
+## function (object, newx, ...) 
+## {
+##     if (missing(newx)) 
+##         return(object)
+##     a <- c(list(x = newx), attributes(object)[c("knots", "Boundary.knots", 
+##         "intercept", "derivs", "centre", "log")])
+##     do.call("nslog", a)
+## }
+## ## first derivative of the nslog() function
+## nslogDeriv<- 
+##   function (x, ...) {
+##     basis <- nslog(x, ...)
+##     h <- .Machine$double.eps^(1/3)*ifelse(abs(x)>1,abs(x),1)
+##     basisD <- apply(predict(basis,x+h)-predict(basis,x-h),2,
+##                       function(u) u/(2*h))
+##     ## basisD <- apply(basisD,2,function(y) y/x)
+##     attributes(basisD) <- attributes(basis)
+##     class(basisD) <- c("nslogDeriv", "basis")
+##     basisD
+##   }
+## makepredictcall.nslogDeriv <- 
+##   function (var, call) 
+## {
+##   if (as.character(call)[1L] != "nslogDeriv") 
+##     return(call)
+##   at <- attributes(var)[c("knots", "Boundary.knots", "intercept",
+##                           "derivs", "centre", "log")]
+##   xxx <- call[1L:2]
+##   xxx[names(at)] <- at
+##   xxx
+## }
+## predict.nslogDeriv <- 
+##   function (object, newx, ...) 
+## {
+##   if (missing(newx)) 
+##     return(object)
+##   a <- c(list(x = newx), attributes(object)[c("knots", "Boundary.knots", 
+##                 "intercept", "derivs", "centre", "log")])
+##   do.call("nslogDeriv", a)
+## }
 ## ## first derivative of bs() function
 ## bsDeriv<- 
 ##   function (x, df = NULL, knots = NULL, intercept = FALSE, Boundary.knots = range(x)) {
@@ -430,9 +430,11 @@ Shat <- function(obj)
     newobj = survfit(obj,se.fit=FALSE)
     surv = newobj$surv
     rr = try(predict(obj,type="risk"),silent=T)
-    ## case: only an intercept in the main formula
-    if (inherits(rr,"try-error") && rr=="Error in rowsum.default(x * weights, indx) : incorrect length for 'group'\n")
-      rr <- 1
+    ## case: only an intercept in the main formula with strata (it would be better to recognise this using attributes for newobj)
+    if (inherits(rr,"try-error")) {
+      if (try in ("Error in colSums(x[j, ] * weights[j]) : \n  'x' must be an array of at least two dimensions\n",
+                  "Error in rowsum.default(x * weights, indx) : incorrect length for 'group'\n")) rr <- 1 else stop(rr)
+    }
     surv2 = surv[match(obj$y[,ncol(obj$y)-1],newobj$time)]
     return(surv2^rr)
   }
@@ -620,6 +622,318 @@ setClass("stpm2", representation(xlevels="list",
                                  y="Surv"
                                  ),
          contains="mle2")
+## recent version of the mle2 function (fixes calls to optim(control=))
+mle2 <- 
+function (minuslogl, start, method, optimizer, fixed = NULL, 
+    data = NULL, subset = NULL, default.start = TRUE, eval.only = FALSE, 
+    vecpar = FALSE, parameters = NULL, parnames = NULL, skip.hessian = FALSE, 
+    hessian.opts = NULL, use.ginv = TRUE, trace = FALSE, browse_obj = FALSE, 
+    transform = NULL, gr, optimfun, ...) 
+{
+    if (!missing(transform)) 
+        stop("parameter transformations not yet implemented")
+    if (missing(method)) 
+        method <- mle2.options("optim.method")
+    if (missing(optimizer)) 
+        optimizer <- mle2.options("optimizer")
+    L <- list(...)
+    if (optimizer == "optimize" && (is.null(L$lower) || is.null(L$upper))) 
+        stop("lower and upper bounds must be specified when using\n'optimize'")
+    if (inherits(minuslogl, "formula")) {
+        pf <- function(f) {
+            if (is.null(f)) {
+                ""
+            }
+            else {
+                paste(f[2], "~", gsub(" ", "", as.character(f[3])), 
+                  sep = "")
+            }
+        }
+        if (missing(parameters)) {
+            formula <- pf(minuslogl)
+        }
+        else {
+            formula <- paste(pf(minuslogl), paste(sapply(parameters, 
+                pf), collapse = ", "), sep = ": ")
+        }
+        tmp <- calc_mle2_function(minuslogl, parameters, start = start, 
+            parnames = parnames, data = data, trace = trace)
+        minuslogl <- tmp$fn
+        start <- tmp$start
+        fdata <- tmp$fdata
+        parameters <- tmp$parameters
+    }
+    else {
+        formula <- ""
+        fdata <- NULL
+    }
+    call <- match.call()
+    call.orig <- call
+    call$data <- eval.parent(call$data)
+    call$upper <- eval.parent(call$upper)
+    call$lower <- eval.parent(call$lower)
+    call$control <- eval.parent(call$control)
+    if (!missing(start)) 
+        if (!is.list(start)) {
+            if (is.null(names(start)) || !is.vector(start)) 
+                stop("'start' must be a named vector or named list")
+            vecpar <- call$vecpar <- TRUE
+            start <- as.list(start)
+        }
+    if (missing(start) && default.start) 
+        start <- formals(minuslogl)
+    if (!is.null(fixed) && !is.list(fixed)) {
+        if (is.null(names(fixed)) || !is.vector(fixed)) 
+            stop("'fixed' must be a named vector or named list")
+        fixed <- as.list(fixed)
+    }
+    if (!is.null(data) && !is.list(data)) 
+        stop("'data' must be a list")
+    nfix <- names(unlist(namedrop(fixed)))
+    if (!is.null(parnames(minuslogl))) {
+        nfull <- parnames(minuslogl)
+        fullcoef <- vector("list", length(nfull))
+        names(fullcoef) <- nfull
+    }
+    else {
+        fullcoef <- formals(minuslogl)
+        nfull <- names(fullcoef)
+    }
+    if (any(!nfix %in% nfull)) 
+        stop("some named arguments in 'fixed' are not arguments to the specified log-likelihood function")
+    if (length(nfix) > 0) 
+        start[nfix] <- NULL
+    fullcoef[nfix] <- fixed
+    nstart <- names(unlist(sapply(namedrop(start), eval.parent)))
+    fullcoef[!nfull %in% nfix & !nfull %in% nstart] <- NULL
+    nfull <- names(fullcoef)
+    lc <- length(call$lower)
+    lu <- length(call$upper)
+    npnfix <- sum(!nfull %in% nfix)
+    if (!npnfix == 0 && (lu > npnfix || lc > npnfix)) {
+        warning("length mismatch between lower/upper ", "and number of non-fixed parameters: ", 
+            "# lower=", lc, ", # upper=", lu, ", # non-fixed=", 
+            npnfix)
+    }
+    template <- lapply(start, eval.parent)
+    if (vecpar) 
+        template <- unlist(template)
+    start <- sapply(namedrop(start), eval.parent)
+    nstart <- names(unlist(namedrop(start)))
+    oo <- match(nstart, names(fullcoef))
+    if (any(is.na(oo))) 
+        stop("some named arguments in 'start' are not arguments to the specified log-likelihood function")
+    start <- start[order(oo)]
+    fix_order <- function(c1, name, default = NULL) {
+        if (!is.null(c1)) {
+            if (length(unique(c1)) > 1) {
+                if (is.null(names(c1)) && length(unique(c1)) > 
+                  1) {
+                  warning(name, " not named: rearranging to match 'start'")
+                  oo2 <- oo
+                }
+                else oo2 <- match(names(unlist(namedrop(c1))), 
+                  names(fullcoef))
+                c1 <- c1[order(oo2)]
+            }
+        }
+        else c1 <- default
+        c1
+    }
+    call$lower <- fix_order(call$lower, "lower bounds", -Inf)
+    call$upper <- fix_order(call$upper, "upper bounds", Inf)
+    call$control$parscale <- fix_order(call$control$parscale, 
+        "parscale")
+    call$control$ndeps <- fix_order(call$control$ndeps, "ndeps")
+    if (is.null(call$control)) 
+        call$control <- list()
+    denv <- local(environment(), c(as.list(data), fdata, list(mleenvset = TRUE)))
+    argnames.in.data <- names(data)[names(data) %in% names(formals(minuslogl))]
+    args.in.data <- lapply(argnames.in.data, get, env = denv)
+    names(args.in.data) <- argnames.in.data
+    args.in.data
+    objectivefunction <- function(p) {
+        l <- relist2(p, template)
+        names(p) <- nstart[order(oo)]
+        l[nfix] <- fixed
+        if (vecpar) {
+            l <- namedrop(l[nfull])
+            l <- unlist(l)
+            args <- list(l)
+            args <- c(list(l), args.in.data)
+        }
+        else {
+            args <- c(l, args.in.data)
+        }
+        if (browse_obj) 
+            browser()
+        do.call("minuslogl", namedrop(args))
+    }
+    objectivefunctiongr <- if (missing(gr)) 
+        NULL
+    else function(p) {
+        l <- relist2(p, template)
+        names(p) <- nstart[order(oo)]
+        l[nfix] <- fixed
+        if (vecpar) {
+            l <- namedrop(l[nfull])
+            l <- unlist(l)
+            args <- list(l)
+            args <- c(list(l), args.in.data)
+        }
+        else {
+            args <- c(l, args.in.data)
+        }
+        v <- do.call("gr", args)
+        if (length(v) == length(p)) {
+            names(v) <- names(p)
+        }
+        else {
+            if (is.null(names(v))) {
+                names(v) <- names(formals(minuslogl))
+            }
+        }
+        v[!names(v) %in% nfix]
+    }
+    if (!("mleenvset" %in% ls(envir = environment(minuslogl)))) {
+        newenv <- new.env(hash = TRUE, parent = environment(minuslogl))
+        d <- as.list(denv)
+        mapply(assign, names(d), d, MoreArgs = list(envir = newenv))
+        environment(minuslogl) <- newenv
+        if (!missing(gr)) {
+            mapply(assign, names(d), d, MoreArgs = list(envir = environment(gr)))
+        }
+    }
+    if (length(start) == 0 || eval.only) {
+        if (length(start) == 0) 
+            start <- numeric(0)
+        optimizer <- "none"
+        skip.hessian <- TRUE
+        oout <- list(par = start, value = objectivefunction(start), 
+            hessian = matrix(NA, nrow = length(start), ncol = length(start)))
+    }
+    else {
+        oout <- switch(optimizer, optim = {
+            arglist <- list(...)
+            arglist$lower <- arglist$upper <- arglist$control <- NULL
+            do.call("optim", c(list(par = start, fn = objectivefunction, 
+                method = method, hessian = FALSE, gr = objectivefunctiongr, 
+                control = call$control, lower = call$lower, upper = call$upper), 
+                arglist))
+        }, optimx = {
+            arglist <- list(...)
+            arglist$lower <- arglist$upper <- arglist$control <- NULL
+            do.call("optimx", c(list(par = start, fn = objectivefunction, 
+                method = method, hessian = FALSE, gr = objectivefunctiongr, 
+                control = call$control, lower = call$lower, upper = call$upper), 
+                arglist))
+        }, nlm = nlm(f = objectivefunction, p = start, hessian = FALSE, 
+            ...), nlminb = nlminb(start = start, objective = objectivefunction, 
+            hessian = NULL, ...), constrOptim = constrOptim(theta = start, 
+            f = objectivefunction, method = method, ...), optimize = , 
+            optimise = optimize(f = objectivefunction, interval = c(call$lower, 
+                call$upper), ...), user = {
+                arglist <- list(...)
+                arglist$lower <- arglist$upper <- arglist$control <- NULL
+                do.call(optimfun, c(list(par = start, fn = objectivefunction, 
+                  method = method, hessian = FALSE, gr = objectivefunctiongr, 
+                  control = call$control, lower = call$lower, 
+                  upper = call$upper), arglist))
+            }, stop("unknown optimizer (choices are 'optim', 'nlm', 'nlminb', 'constrOptim', 'user', and 'optimi[sz]e')"))
+    }
+    optimval <- switch(optimizer, optim = , constrOptim = , optimx = , 
+        user = , none = "value", nlm = "minimum", optimize = , 
+        optimise = , nlminb = "objective")
+    if (optimizer == "optimx") {
+        fvals <- unlist(oout$fvalues)
+        conv <- unlist(oout$conv)
+        best <- which.min(fvals)
+        oout <- list(par = oout$par[[best]], value = fvals[best], 
+            convergence = conv[best], method.used = oout$method[[best]])
+    }
+    if (optimizer == "nlm") {
+        oout$par <- oout$estimate
+        oout$convergence <- oout$code
+    }
+    if (optimizer %in% c("optimise", "optimize")) {
+        oout$par <- oout$minimum
+        oout$convergence <- 0
+    }
+    if (optimizer %in% c("nlminb", "optimise", "optimize")) {
+        names(oout$par) <- names(start)
+    }
+    if (length(oout$par) == 0) 
+        skip.hessian <- TRUE
+    if (!skip.hessian) {
+        if ((!is.null(call$upper) || !is.null(call$lower)) && 
+            any(oout$par == call$upper) || any(oout$par == call$lower)) 
+            warning("some parameters are on the boundary: variance-covariance calculations based on Hessian may be unreliable")
+    }
+    namatrix <- matrix(NA, nrow = length(start), ncol = length(start))
+    if (!skip.hessian) {
+        psc <- call$control$parscale
+        if (is.null(psc)) {
+            oout$hessian <- try(hessian(objectivefunction, oout$par, 
+                method.args = hessian.opts))
+        }
+        else {
+            tmpf <- function(x) {
+                objectivefunction(x * psc)
+            }
+            oout$hessian <- try(hessian(tmpf, oout$par/psc, method.args = hessian.opts))/outer(psc, 
+                psc)
+        }
+    }
+    if (skip.hessian || inherits(oout$hessian, "try-error")) 
+        oout$hessian <- namatrix
+    coef <- oout$par
+    nc <- names(coef)
+    if (skip.hessian) {
+        tvcov <- matrix(NA, length(coef), length(coef))
+    }
+    else {
+        if (length(coef)) {
+            if (use.ginv) {
+                tmphess <- try(MASS::ginv(oout$hessian))
+            }
+            else {
+                tmphess <- try(solve(oout$hessian, silent = TRUE))
+            }
+            if (class(tmphess) == "try-error") {
+                tvcov <- matrix(NA, length(coef), length(coef))
+                warning("couldn't invert Hessian")
+            }
+            else tvcov <- tmphess
+        }
+        else {
+            tvcov <- matrix(numeric(0), 0, 0)
+        }
+    }
+    dimnames(tvcov) <- list(nc, nc)
+    min <- oout[[optimval]]
+    fullcoef[nstart[order(oo)]] <- coef
+    if (length(coef)) {
+        gradvec <- if (!missing(gr)) {
+            objectivefunctiongr(coef)
+        }
+        else {
+            grad(objectivefunction, coef)
+        }
+        oout$maxgrad <- max(abs(gradvec))
+        if (!skip.hessian) {
+            ev <- eigen(oout$hessian)$value
+            oout$eratio <- min(ev)/max(ev)
+        }
+    }
+    m <- new("mle2", call = call, call.orig = call.orig, coef = coef, 
+        fullcoef = unlist(fullcoef), vcov = tvcov, min = min, 
+        details = oout, minuslogl = minuslogl, method = method, 
+        optimizer = optimizer, data = as.list(data), formula = formula)
+    attr(m, "df") = length(m@coef)
+    if (!missing(data)) 
+        attr(m, "nobs") = length(data[[1]])
+    m
+}
 
 stpm2 <- function(formula, data,
                   df=3, logH.args=NULL, logH.formula=NULL,
@@ -662,15 +976,9 @@ stpm2 <- function(formula, data,
     }
     if (!is.null(tvc.formula))
       rhs(full.formula) <- rhs(full.formula) %call+% rhs(tvc.formula)
-    logHD.formula <- replaceFormula(logH.formula,quote(ns),quote(nsDeriv))
-    logHD.formula <- replaceFormula(logH.formula,quote(nslog),quote(nslogDeriv))
     logHD.formula <- replaceFormula(logHD.formula,quote(nsx),quote(nsxDeriv))
-    logHD.formula <- replaceFormula(logHD.formula,quote(bs),quote(bsDeriv))
     if (!is.null(tvc.formula)) {
-      tvcD.formula <- replaceFormula(tvc.formula,quote(ns),quote(nsDeriv))
-      tvcD.formula <- replaceFormula(tvc.formula,quote(nslog),quote(nslogDeriv))
       tvcD.formula <- replaceFormula(tvcD.formula,quote(nsx),quote(nsxDeriv))
-      tvcD.formula <- replaceFormula(tvcD.formula,quote(bs),quote(bsDeriv))
       rhs(logHD.formula) <- logHD.formula[[2]] %call+% tvcD.formula[[2]]
     }
     ## set up primary terms objects (mt and mtd)
