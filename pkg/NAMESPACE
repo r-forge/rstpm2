@@ -1,11 +1,11 @@
 ##exportPattern("^[[:alpha:]]+")
 export(stpm2,incrVar,
-       ##nsDeriv,makepredictcall.nsDeriv,predict.nsDeriv,
-       ##bsDeriv,makepredictcall.bsDeriv,predict.bsDeriv,
        nsx,makepredictcall.nsx,predict.nsx,
        nsxDeriv,makepredictcall.nsxDeriv,predict.nsxDeriv,
-       nslog,makepredictcall.nslog,predict.nslog,
-       nslogDeriv,makepredictcall.nslogDeriv,predict.nslogDeriv,
+       ## nsDeriv,makepredictcall.nsDeriv,predict.nsDeriv,
+       ## bsDeriv,makepredictcall.bsDeriv,predict.bsDeriv,
+       ## nslog,makepredictcall.nslog,predict.nslog,
+       ## nslogDeriv,makepredictcall.nslogDeriv,predict.nslogDeriv,
        predictnl,predictnl.default
        )
 exportMethods(
