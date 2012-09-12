@@ -102,8 +102,8 @@ data(brcancer)
 summary(fit <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=3))
 
 ## some predictions
-head(predict(fit,se.fit=T,type="surv"))
-head(predict(fit,se.fit=T,type="hazard"))
+head(predict(fit,se.fit=TRUE,type="surv"))
+head(predict(fit,se.fit=TRUE,type="hazard"))
 
 ## some plots
 plot(fit,newdata=data.frame(hormon=0),type="hazard")
@@ -133,7 +133,7 @@ plot(fit,type="hazard",newdata=hormon0)
 AIC(fit)
 for (df in 4:6) {
     fit.new <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=df)
-    plot(fit.new,type="hazard",newdata=hormon0,add=T,ci=F,line.col=df)
+    plot(fit.new,type="hazard",newdata=hormon0,add=TRUE,ci=FALSE,line.col=df)
     print(AIC(fit.new))
 }
 
