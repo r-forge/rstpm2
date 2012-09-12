@@ -1,4 +1,4 @@
-## package.skeleton(name="rstpm2", path="c:/usr/src/R", force=T, namespace=T, code_files="pm2-3.R")
+## package.skeleton(name="rstpm2", path="c:/usr/src/R", force=TRUE, namespace=TRUE, code_files="pm2-3.R")
 ## Local Windows setup:
 ## Rtools.bat
 ## R CMD INSTALL --html "c:/usr/src/R/rstpm2/pkg"
@@ -430,7 +430,7 @@ Shat <- function(obj)
     ## predicted survival for individuals (adjusted for covariates)
     newobj = survfit(obj,se.fit=FALSE)
     surv = newobj$surv
-    rr = try(predict(obj,type="risk"),silent=T)
+    rr = try(predict(obj,type="risk"),silent=TRUE)
     ## case: only an intercept in the main formula with strata (it would be better to recognise this using attributes for newobj)
     if (inherits(rr,"try-error")) {
       if (try %in% c("Error in colSums(x[j, ] * weights[j]) : \n  'x' must be an array of at least two dimensions\n",
@@ -627,7 +627,7 @@ setClass("stpm2", representation(xlevels="list",
 stpm2 <- function(formula, data,
                   df=3, logH.args=NULL, logH.formula=NULL,
                   tvc=NULL, tvc.formula=NULL,
-                  control=list(parscale=0.1,maxit=300), init=F,
+                  control=list(parscale=0.1,maxit=300), init=FALSE,
                   coxph.strata=NULL, weights=NULL, robust=FALSE,
                   bhazard=NULL, contrasts=NULL, subset=NULL, ...)
   {
@@ -994,7 +994,7 @@ setMethod("plot", signature(x="stpm2", y="missing"),
                       xlab="Time",line.col=1,ci.col="grey",
                       add=FALSE,ci=TRUE,rug=TRUE,
                       var=NULL,...) {
-  y <- predict(x,newdata,type=type,var=var,grid=T,se.fit=T)
+  y <- predict(x,newdata,type=type,var=var,grid=TRUE,se.fit=TRUE)
   ylab <- switch(type,hr="Hazard ratio",hazard="Hazard",surv="Survival",
                  sdiff="Survival difference",hdiff="Hazard difference")
   xx <- attr(y,"newdata")
@@ -1088,8 +1088,8 @@ sandwich(fit,bread.=bread.stpm2,meat.=meat.stpm2)
 
 
 ## some predictions
-head(predict(fit,se.fit=T,type="surv"))
-head(predict(fit,se.fit=T,type="hazard"))
+head(predict(fit,se.fit=TRUE,type="surv"))
+head(predict(fit,se.fit=TRUE,type="hazard"))
 
 ## some plots
 plot(fit,newdata=data.frame(hormon=0),type="hazard")
@@ -1134,7 +1134,7 @@ colon2 <- merge(colon2,popmort)
 summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
                      data=colon2,
                      bhazard=colon2$rate,
-                     logH.formula=~nsx(log(tm),df=5,cure=T,stata=T))) # oops
+                     logH.formula=~nsx(log(tm),df=5,cure=TRUE,stata=TRUE))) # oops
 head(predict(fit))
 plot(fit,newdata=data.frame(hormon=1))
 plot(fit,newdata=data.frame(hormon=1),type="hazard")
@@ -1148,14 +1148,14 @@ predict(lm(y~nsx(x,knots=c(25,50,75,95)),old)) # as per Stata
 newx <- seq(min(oldx)/1.05,max(oldx)*1.05,length=101)
 new <- data.frame(x=newx)
 plot(oldx,oldy)
-predict(lm(y~nsx(x,df=5,cure=T),old))
+predict(lm(y~nsx(x,df=5,cure=TRUE),old))
 sum(oldy)
-terms(lm(y~nsx(x,df=5,cure=T),old))
+terms(lm(y~nsx(x,df=5,cure=TRUE),old))
 lm(y~nsx(x,df=5),old)
 
 
 lines(newx,
-      predict(lm(y~nsx(x,df=4,cure=F),old),newdata=new),
+      predict(lm(y~nsx(x,df=4,cure=FALSE),old),newdata=new),
       type="l") # oops
 lines(newx,
       predict(lm(y~nsx(x,df=3),old),newdata=new),
@@ -1165,10 +1165,10 @@ lines(newx,
 summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
                      data=colon2,
                      bhazard=colon2$rate,
-                     logH.formula=~nsx(log(tm),df=6,stata=T))) # okay
+                     logH.formula=~nsx(log(tm),df=6,stata=TRUE))) # okay
 summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
                      data=colon2,
-                     logH.formula=~nsx(log(tm),df=6,stata=T))) # okay
+                     logH.formula=~nsx(log(tm),df=6,stata=TRUE))) # okay
 
 ## Stata
 ## stata.knots=c(4.276666164398193, 6.214608192443848, 6.7833251953125, 7.806289196014404)
@@ -1186,7 +1186,7 @@ summary(fit <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,
 summary(stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,
               logH.formula=~ns(log(rectime),df=3)))
 
-pred <- predict(fit.tvc,newdata=data.frame(hormon=0:3),grid=T,se.fit=T,type="cumhaz")
+pred <- predict(fit.tvc,newdata=data.frame(hormon=0:3),grid=TRUE,se.fit=TRUE,type="cumhaz")
 pred.all <- cbind(pred,attr(pred,"newdata"))
 require(lattice)
 xyplot(Estimate ~ rectime, data=pred.all, group=hormon,type="l",xlab="Time")
@@ -1195,18 +1195,18 @@ xyplot(Estimate ~ rectime, data=pred.all, group=hormon,type="l",xlab="Time")
 ## relative survival
 brcancer <- transform(brcancer,rate0=10^(-5+x1/100))
 summary(fit <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,bhazard=brcancer$rate0,df=3))
-head(predict(fit,se.fit=T))
+head(predict(fit,se.fit=TRUE))
 
 ## delayed entry
 brcancer2 <- transform(brcancer,startTime=ifelse(hormon==0,rectime*0.5,0))
 ## debug(stpm2)
 summary(fit <- stpm2(Surv(startTime,rectime,censrec==1)~hormon,data=brcancer2,
-                     logH.formula=~nsx(log(rectime),df=3,stata=T)))
-head(predict(fit,se.fit=T))
+                     logH.formula=~nsx(log(rectime),df=3,stata=TRUE)))
+head(predict(fit,se.fit=TRUE))
 ## delayed entry and tvc
 summary(fit <- stpm2(Surv(startTime,rectime,censrec==1)~hormon,data=brcancer2,
-                     tvc.formula=~hormon:nsx(log(rectime),df=3,stata=T)))
-head(predict(fit,se.fit=T))
+                     tvc.formula=~hormon:nsx(log(rectime),df=3,stata=TRUE)))
+head(predict(fit,se.fit=TRUE))
 
 
 
@@ -1219,13 +1219,13 @@ head(predict(fit))
 grid.x1 <- with(brcancer, seq(40,70,length=300))
 newdata0 <- with(brcancer, data.frame(recyr=5,x1=grid.x1,hormon=0))
 matplot(grid.x1,
-        predict(fit,type="hr",newdata=newdata0,var="hormon",se.fit=T), type="l")
+        predict(fit,type="hr",newdata=newdata0,var="hormon",se.fit=TRUE), type="l")
 ## predictions with multiple time scales
 summary(fit <- stpm2(Surv(recyr,censrec==1)~hormon,data=brcancer,
                      logH.formula=~nsx(log(recyr),df=3,centre=log(50)),
                      tvc.formula=~hormon:nsx(log(recyr+x1),df=2)))
 matplot(grid.x1,
-        predict(fit,type="hr",newdata=newdata0,var="hormon",se.fit=T), type="l")
+        predict(fit,type="hr",newdata=newdata0,var="hormon",se.fit=TRUE), type="l")
 
 
 
@@ -1242,7 +1242,7 @@ summary(fit <- stpm2(Surv(recyr,censrec==1)~hormon+x1,data=brcancer,
 
 
 plot(grid.x1,
-     predict(fit,type="hr",newdata=newdata0,var="hormon",se.fit=T)$fit, type="l")
+     predict(fit,type="hr",newdata=newdata0,var="hormon",se.fit=TRUE)$fit, type="l")
 
 plot(fit,newdata=data.frame(hormon=0,x1=50),var="hormon",type="hr")
 
@@ -1271,7 +1271,7 @@ y <- rweibull(1000,shape=1,scale=1)
 
 with(brcancer, plot(density(x1[censrec==1])))
 
-summary(fit <- stpm2(Surv(recyr,censrec==1)~hormon,data=brcancer,logH.formula=~nsx(log(recyr),df=3,stata=T)))
+summary(fit <- stpm2(Surv(recyr,censrec==1)~hormon,data=brcancer,logH.formula=~nsx(log(recyr),df=3,stata=TRUE)))
 
 
 
@@ -1292,10 +1292,10 @@ system.time(summary(fit <- stpm2(Surv(rectime,censrec==1)~hormon,df=3,data=brcan
 nsx(1:10,df=3) - ns(1:10,df=3)
 nsx(1:10,df=3,centre=3)
 nsx(1:10,df=3,centre=3,Boundary.knots=c(2,8),derivs=c(1,1))
-nsx(1:10,df=3,cure=T)
+nsx(1:10,df=3,cure=TRUE)
 nsxDeriv(1:10,df=3) - nsDeriv(1:10,df=3)
 nsxDeriv(1:10,df=3,centre=5,derivs=c(1,1))
-nsxDeriv(1:10,df=3,centre=5,cure=T)
+nsxDeriv(1:10,df=3,centre=5,cure=TRUE)
 
 nsDeriv(1:10,df=3) - nsDeriv2(1:10,df=3)
 
@@ -1384,7 +1384,7 @@ d <- data.frame(x,y)
 ## with(list(df=df,x=seq(0,3,length=100)[-1]),
 ##      {
 ##        plot(x,hazard.pm(fit,x,X,XD),type="l",ylim=c(0,2))
-##        lines(x,dweibull(x,shape=1)/pweibull(x,shape=1,lower=F),lty=2)
+##        lines(x,dweibull(x,shape=1)/pweibull(x,shape=1,lower=FALSE),lty=2)
 ##      })
 ## ##
 ## require(deSolve)
