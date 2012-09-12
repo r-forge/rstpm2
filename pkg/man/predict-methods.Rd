@@ -35,7 +35,7 @@
       \item{"sdiff"}{survival difference}
       \item{"hdiff"}{hazard difference}
       \item{"loghazard"}{log hazards}
-      \item{"link"}{$X \beta$}
+      \item{"link"}{X beta}
     }
   }
   \item{grid}{whether to merge newdata with a regular sequence of event
