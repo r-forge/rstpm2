@@ -3,7 +3,8 @@
 ## Rtools.bat
 ## R CMD INSTALL --html "c:/usr/src/R/rstpm2/pkg"
 ## R CMD build "c:/usr/src/R/rstpm2/pkg"
-## R CMD build --binary "c:/usr/src/R/rstpm2/pkg"
+## R CMD INSTALL --build "c:/usr/src/R/rstpm2/pkg"
+## R CMD CHECK "c:/usr/src/R/rstpm2/pkg"
 ##
 ## Local Ubuntu setup:
 ## R CMD INSTALL --html ~/src/R/rstpm2/pkg --library=~/R/x86_64-pc-linux-gnu-library/2.12
@@ -626,7 +627,7 @@ setClass("stpm2", representation(xlevels="list",
 stpm2 <- function(formula, data,
                   df=3, logH.args=NULL, logH.formula=NULL,
                   tvc=NULL, tvc.formula=NULL,
-                  control=list(parscale=0.1,maxit=300),
+                  control=list(parscale=0.1,maxit=300), init=F,
                   coxph.strata=NULL, weights=NULL, robust=FALSE,
                   bhazard=NULL, contrasts=NULL, subset=NULL, ...)
   {
@@ -715,14 +716,21 @@ stpm2 <- function(formula, data,
     coxph.formula <- formula
     if (!is.null(coxph.strata)) 
       rhs(coxph.formula) <- rhs(formula) %call+% call("strata",coxph.strata)
-    coxph.obj <- coxph(coxph.formula,data=data,model=TRUE)
+    coxph.obj <- quote(coxph(coxph.formula,data=data,model=TRUE))
+    coxph.obj$weights <- substitute(weights)
+    coxph.obj <- eval(coxph.obj)
     ## coxph.obj <- eval.parent(substitute(coxph(formula,data),
     ##                                     list(formula=formula,data=data)))
     data$logHhat <- pmax(-18,log(-log(Shat(coxph.obj))))
     ##
     lm.formula <- full.formula
     lhs(lm.formula) <- quote(logHhat) # new response
-    init <- coef(lm(lm.formula,data[event,],contrasts=contrasts))
+    if (!init) {
+      lm.obj <- lm(lm.formula,data[event,],contrasts=contrasts)
+      lm.obj$weights <- substitute(weights)
+      lm.obj <- eval(lm.obj)
+      init <- coef(lm.obj)
+    }
     indexXD <- (length(coef(coxph.obj))+2):ncol(X)
     bhazard <- if (is.null(bhazard)) 0 else bhazard[event] # crude
     if (delayed && any(y[,1]>0)) {
@@ -735,6 +743,7 @@ stpm2 <- function(formula, data,
       mfX2$formula <- quote(mt2)
       mfX2$data <- quote(data2)
       mfX2 <- eval(mfX2)
+      wt2 <- model.weights(mfX2)
       ##mfX2 <- model.frame(mt2, data2, xlev=xlev, weights = weights)
       if (!is.null(cl <- attr(mt2, "dataClasses"))) 
         .checkMFClasses(cl, mfX2)
@@ -748,7 +757,7 @@ stpm2 <- function(formula, data,
         h <- (XD[event,] %*% beta[indexXD])*exp(eta[event]) + bhazard
         ## h <- (XD[event,] %*% beta[indexXD])*exp(eta[event])/time[event] + bhazard
         h[h<0] <- 1e-100
-        ll <- sum(wt[event]*log(h)) +  sum(wt*exp(eta2)) -
+        ll <- sum(wt[event]*log(h)) +  sum(wt2*exp(eta2)) -
           sum(wt*exp(eta))
         return(-ll)
       }
@@ -1009,9 +1018,9 @@ if (F) { # testing in open code
   brcancer=read.dta("brcancer.dta")
   brcancer=transform(brcancer,rate0=10^(-5+x1/100))
 }
-try(detach("package:bbmle",unload=TRUE),silent=TRUE)
+try(suppressWarnings(detach("package:bbmle",unload=TRUE)),silent=TRUE)
 
-try(detach("package:rstpm2",unload=TRUE),silent=TRUE)
+try(suppressWarnings(detach("package:rstpm2",unload=TRUE)),silent=TRUE)
 require(rstpm2)
 data(brcancer)
 summary(fit <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,
@@ -1019,7 +1028,7 @@ summary(fit <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,
 
 brcancer <- transform(brcancer,w=10)
 summary(fit <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,
-                     weights=w,robust=T,
+                     weights=w,robust=TRUE,
                      logH.formula=~nsx(log(rectime),df=3,stata=TRUE)))
 
 
