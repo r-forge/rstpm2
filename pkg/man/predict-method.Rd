@@ -14,7 +14,7 @@
 \usage{
 
     \S4method{predict}{stpm2}(object, newdata=NULL,
-               type=c("surv","cumhaz","hazard","hr","sdiff","hdiff"),
+               type=c("surv","cumhaz","hazard","hr","sdiff","hdiff","loghazard","link"),
                grid=FALSE,seqLength=300,
                se.fit=FALSE,link=NULL,exposed=incrVar(var),var,...)
 }
@@ -34,16 +34,20 @@
       \item{"hr"}{hazard ratio}
       \item{"sdiff"}{survival difference}
       \item{"hdiff"}{hazard difference}
+      \item{"loghazard"}{log hazards}
+      \item{"link"}{$X \beta$}
     }
   }
   \item{grid}{whether to merge newdata with a regular sequence of event
-               times (default=FALSE)}
+    times (default=FALSE)}
   \item{seqLength}{length of the sequence used when \code{grid=TRUE}}
   \item{se.fit}{whether to calculate confidence intervals (default=FALSE)}
   \item{link}{allows a different link for the confidence interval
-               calculation (default=NULL)}
+    calculation (default=NULL, such that
+    switch(type,surv="cloglog",cumhaz="log",hazard="log",hr="log",sdiff="I",
+    hdiff="I",loghazard="I",link="I"))}
   \item{exposed}{a function that takes newdata and returns a transformed
-               data-frame for those exposed}
+               data-frame for those exposed (defaults to incrementing ``var'')}
   \item{var}{specify the variable name or names for the
                exposed/unexposed (names are given as characters)}
   \item{\dots}{additional arguments (for generic compatibility)}
