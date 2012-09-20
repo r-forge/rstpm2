@@ -13,9 +13,38 @@ In this example we embed parts of the examples from the
 \texttt{kruskal.test} help page into a \LaTeX{} document:
 
 <<>>=
-data(airquality)
-library(ctest)
-kruskal.test(Ozone ~ Month, data = airquality)
+require(rstpm2)
+popmort2 <- transform(popmort, X_age=`_age`, X_year=`_year`)
+colon2 <- within(colon, {
+  status <- ifelse(`surv_mm`>120.5,1,status)
+  tm <- pmin(`surv_mm`,120.5)/12
+  exit <- dx+tm*365.25
+  sex <- as.numeric(sex)
+  X_age <- pmin(floor(age+tm),99)
+  X_year <- floor(yydx+tm)
+})
+colon2 <- merge(colon2,popmort2)
+
+## compare relative survival without and with cure 
+summary(fit0 <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
+                     data=colon2,
+                     bhazard=colon2$rate, df=5)) ## CHECKED: same year8594 estimate as Stata
+head(predict(fit0))
+## estimate of failure at the end of follow-up
+1-predict(fit0,data.frame(year8594 = unique(colon2$year8594),tm=max(colon2$tm)),type="surv",se.fit=TRUE)
+plot(fit0,newdata=data.frame(year8594 = "Diagnosed 85-94"),ylim=0:1)
+plot(fit0,newdata=data.frame(year8594 = "Diagnosed 75-84"),add=TRUE,line.col="red",rug=FALSE)
+##
+summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
+                     data=colon2,
+                     bhazard=colon2$rate,
+                     df=5,cure=TRUE))
+head(predict(fit))
+## cure fractions (I need to add this to the predict function)
+1-predict(fit,data.frame(year8594 = unique(colon2$year8594),tm=max(colon2$tm)),type="surv",se.fit=TRUE)
+newdata1 <- data.frame(year8594 = "Diagnosed 85-94")
+plot(fit,newdata=newdata1,add=TRUE,ci=FALSE,lty=2,rug=FALSE)
+plot(fit,newdata=data.frame(year8594="Diagnosed 75-84"),add=TRUE,rug=FALSE,line.col="red",ci=FALSE,lty=2)
 @
 which shows that the location parameter of the Ozone 
 distribution varies significantly from month to month. Finally we
@@ -23,7 +52,6 @@ include a boxplot of the data:
 
 \begin{center}
 <<fig=TRUE,echo=FALSE>>=
-boxplot(Ozone ~ Month, data = airquality)
 @
 \end{center}
 

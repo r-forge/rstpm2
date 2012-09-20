@@ -1123,10 +1123,16 @@ summary(fit.tvc <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=3,
 
 ## cure model
 ## cf. http://www.pauldickman.com/survival/solutions/q37.do
+### Data setup
+## require(foreign)
+## colon <- read.dta("http://www.pauldickman.com/survival/colon.dta")
+## popmort <- read.dta("http://www.pauldickman.com/survival/popmort.dta")
+## brcancer <- read.dta("http://www.stata-press.com/data/r11/brcancer.dta")
+## save(colon,file="c:/usr/src/R/rstpm2/pkg/data/colon.rda")
+## save(popmort,file="c:/usr/src/R/rstpm2/pkg/data/popmort.rda")
+## save(brcancer,file="c:/usr/src/R/rstpm2/pkg/data/brcancer.rda")
+
 require(rstpm2)
-require(foreign)
-colon <- read.dta("http://www.pauldickman.com/survival/colon.dta")
-popmort <- read.dta("http://www.pauldickman.com/survival/popmort.dta")
 popmort2 <- transform(popmort, X_age=`_age`, X_year=`_year`)
 colon2 <- within(colon, {
   status <- ifelse(`surv_mm`>120.5,1,status)
