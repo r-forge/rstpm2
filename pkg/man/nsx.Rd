@@ -13,7 +13,7 @@ nsx(x, df = NULL, knots = NULL, intercept = FALSE,
 \arguments{
   \item{x}{the predictor variable.  Missing values are allowed.}
   \item{df}{degrees of freedom. One can supply \code{df} rather than
-    knots; \code{ns()} then chooses \code{df - 1 - intercept} knots at
+    knots; \code{ns()} then chooses \code{df - 1 - intercept + 4 - sum(derivs)} knots at
     suitably chosen quantiles of \code{x} (which will ignore missing values).}
   \item{knots}{breakpoints that define the spline.  The default is no
     knots; together with the natural boundary conditions this results in
@@ -27,15 +27,19 @@ nsx(x, df = NULL, knots = NULL, intercept = FALSE,
     of the data).  If both \code{knots} and \code{Boundary.knots} are
     supplied, the basis parameters do not depend on \code{x}. Data can
     extend beyond \code{Boundary.knots}}
-  \item{derivs}{vector of length 2 giving the derivative constraint order at
-    the left and right boundary knots; an order of 2 gives a linear
-    constraint, while an order of 1 gives a constant constraint}
+  \item{derivs}{an integer vector of length 2 with values between 0 and
+    2 giving the derivative constraint order at
+    the left and right boundary knots; an order of 2 constrains the
+    second derivative to zero (f''(x)=0); an order of 1 constrains the
+    first and second derivatives to zero (f'(x)=f''(x)=0); an order of 1
+  constrains the zero, first and second derivatives to zero (f(x)=f'(x)=f''(x)=0)}
   \item{log}{a Boolean indicating whether the underlying values have been
     log transformed; used to calculate derivatives}
   \item{centre}{if specified, then centre the splines at this value
     (i.e. f(centre)=0) (default=FALSE)}
   \item{cure}{a Boolean indicated whether to estimate cure; changes the
-    default derivs argument; defaults to FALSE}
+    default derivs argument, such that the right boundary has the first
+    and second derivatives constrained to zero; defaults to FALSE}
   \item{stata.stpm2.compatible}{a Boolean to determine whether to use
     Stata stpm's default knot placement; defaults to FALSE}
 }
@@ -58,8 +62,10 @@ nsx(x, df = NULL, knots = NULL, intercept = FALSE,
 
     The extensions from \code{\link{ns}} are: specification of the
     derivative constraints at the boundary knots; whether to centre the
-    knots; and an indicator for a log-transformation of \code{x} for
-    calculating derivatives.
+    knots; incorporation of cure using derivatives; compatible knots
+    with Stata's stpm2; and an indicator for a log-transformation of
+    \code{x} for calculating derivatives.
+    
 }
 \seealso{
   \code{\link{ns}}, \code{\link{bs}}, \code{predict.nsx}, \code{\link{SafePrediction}}

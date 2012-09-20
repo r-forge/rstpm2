@@ -9,9 +9,12 @@ Flexible parametric survival model
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-stpm2(formula, data, df = 3, logH.args = NULL, logH.formula = NULL, tvc = NULL, tvc.formula = NULL, control = list(parscale = 0.1, maxit = 300),
-coxph.strata = NULL, bhazard = NULL, weights= NULL, robust = FALSE, contrasts = NULL, ...)
-}
+
+stpm2(formula, data, df=3, logH.args=NULL, logH.formula=NULL, tvc=NULL,
+                  tvc.formula=NULL,
+                  control=list(parscale=0.1,maxit=300), init=FALSE,
+                  coxph.strata=NULL, weights=NULL, robust=FALSE,
+                  bhazard=NULL, contrasts=NULL, subset=NULL, ...)  }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{formula}{
@@ -54,16 +57,19 @@ present, this does not use \code{data}. At present, this is required for
 all individuals - although it is only used at the event times.
 }
 \item{control}{\code{control} argument passed to \code{optim}.}
+\item{init}{\code{init} should be \code{FALSE}, such that initial
+                  values will be determined internally, or a numeric
+                  vector of initial values.}
 \item{coxph.strata}{variable in the \code{data} argument for
   stratification of the \code{coxph} model fit for estimating initial values.}
-  \item{contrasts}{
-an optional list. See the \code{contrasts.arg}
-    of \code{\link{model.matrix.default}}.
-}
 \item{weights}{an optional vector of 'prior weights' to be used in the
   fitting process. Should be \code{NULL} or a numeric vector.}
 \item{robust}{Boolean used to determine whether to use a robust variance
   estimator.}
+  \item{contrasts}{an optional list. See the \code{contrasts.arg}
+    of \code{\link{model.matrix.default}}.
+}
+\item{subset}{an optional vector specifying a subset of observations to be used in the fitting process.}
 \item{\dots}{
   additional arguments to be passed to the \code{\link{mle2}} .
 }

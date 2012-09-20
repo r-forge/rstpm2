@@ -2,11 +2,11 @@
 \Rdversion{1.1}
 \alias{grad}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{gradient function
+\title{gradient function (internal function)
 %%  ~~function to do ... ~~
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Numerical gradient for a function at a given value
 }
 \usage{
 grad(func, x, ...)
@@ -14,30 +14,28 @@ grad(func, x, ...)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{func}{
-%%     ~~Describe \code{func} here~~
+    Function taking a vector argument x (returns a vector of length>=1)
 }
   \item{x}{
-%%     ~~Describe \code{x} here~~
+    vector of arguments for where the gradient is wanted.
 }
   \item{\dots}{
-%%     ~~Describe \code{\dots} here~~
+    other arguments to the function
 }
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
+  (func(x+delta,...)-func(x-delta,...))/(2 delta) where delta is the third root
+  of the machine precision times pmax(1,abs(x)).
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+  A vector if func(x) has length 1, otherwise a matrix with rows for x
+  and columns for func(x).
 }
 \references{
 %% ~put references to the literature/web site here ~
 }
 \author{
-%%  ~~who you are~~
+  Mark Clements.
 }
 \note{
 %%  ~~further notes~~
@@ -46,40 +44,10 @@ grad(func, x, ...)
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+  numDelta()
 }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
 
-## The function is currently defined as
-function (func, x, ...) 
-{
-    h <- .Machine$double.eps^(1/3) * ifelse(abs(x) > 1, abs(x), 
-        1)
-    temp <- x + h
-    h.hi <- temp - x
-    temp <- x - h
-    h.lo <- x - temp
-    twoeps <- h.hi + h.lo
-    nx <- length(x)
-    ny <- length(func(x, ...))
-    if (ny == 0L) 
-        stop("Length of function equals 0")
-    df <- if (ny == 1L) 
-        rep(NA, nx)
-    else matrix(NA, nrow = nx, ncol = ny)
-    for (i in 1L:nx) {
-        hi <- lo <- x
-        hi[i] <- x[i] + h.hi[i]
-        lo[i] <- x[i] - h.lo[i]
-        if (ny == 1L) 
-            df[i] <- (func(hi, ...) - func(lo, ...))/twoeps[i]
-        else df[i, ] <- (func(hi, ...) - func(lo, ...))/twoeps[i]
-    }
-    return(df)
-  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

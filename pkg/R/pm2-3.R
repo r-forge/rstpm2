@@ -39,7 +39,7 @@ function (x, df = NULL, knots = NULL, intercept = FALSE,
     }
     else outside <- FALSE
     if (!missing(df) && missing(knots)) {
-        nIknots <- df - 1 - intercept
+        nIknots <- df - 1 - intercept + 4 - sum(derivs) 
         if (nIknots < 0) {
             nIknots <- 0
             warning("'df' was too small; have used ", 1 + intercept)
@@ -78,14 +78,13 @@ function (x, df = NULL, knots = NULL, intercept = FALSE,
                 4)$design
     }
     else basis <- spline.des(Aknots, x, 4)$design
-    const <- spline.des(Aknots, Boundary.knots, 4, derivs)$design
+    const <- splineDesign(Aknots, rep(Boundary.knots, 3-derivs), 4, c(derivs[1]:2, derivs[2]:2))
     if (!intercept) {
         const <- const[, -1, drop = FALSE]
         basis <- basis[, -1, drop = FALSE]
     }
     qr.const <- qr(t(const))
-    basis <- as.matrix((t(qr.qty(qr.const, t(basis))))[, -(1L:2L), 
-        drop = FALSE])
+    basis <- as.matrix((t(qr.qty(qr.const, t(basis))))[, -(1L:nrow(const)), drop = FALSE])
     n.col <- ncol(basis)
     if (nas) {
         nmat <- matrix(NA, length(nax), n.col)
@@ -624,6 +623,9 @@ setClass("stpm2", representation(xlevels="list",
                                  ),
          contains="mle2")
 
+## debug(nsx)
+## nsx(1:10,df=4,cure=T)
+
 stpm2 <- function(formula, data,
                   df=3, logH.args=NULL, logH.formula=NULL,
                   tvc=NULL, tvc.formula=NULL,
@@ -996,7 +998,7 @@ setMethod("plot", signature(x="stpm2", y="missing"),
                       var=NULL,...) {
   y <- predict(x,newdata,type=type,var=var,grid=TRUE,se.fit=TRUE)
   ylab <- switch(type,hr="Hazard ratio",hazard="Hazard",surv="Survival",
-                 sdiff="Survival difference",hdiff="Hazard difference")
+                 sdiff="Survival difference",hdiff="Hazard difference",cumhaz="Cumulative hazard")
   xx <- attr(y,"newdata")
   xx <- xx[,ncol(xx)]
   if (!add) matplot(xx, y, type="n", xlab=xlab, ylab=ylab, ...)
@@ -1120,26 +1122,71 @@ summary(fit.tvc <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=3,
 
 
 ## cure model
+## cf. http://www.pauldickman.com/survival/solutions/q37.do
+require(rstpm2)
 require(foreign)
 colon <- read.dta("http://www.pauldickman.com/survival/colon.dta")
 popmort <- read.dta("http://www.pauldickman.com/survival/popmort.dta")
-names(popmort)[match(c("_age","_year"),names(popmort))] <- c("X_age","X_year")
-colon2 <- transform(transform(colon,
-                              status=ifelse(`surv_mm`>120.5,1,status),
-                              tm=pmin(`surv_mm`,120.5)/12,
-                              sex=as.numeric(sex)),
-                    X_age=pmin(floor(age+tm),99),
-                    X_year=floor(yydx+tm))
-colon2 <- merge(colon2,popmort)
+popmort2 <- transform(popmort, X_age=`_age`, X_year=`_year`)
+colon2 <- within(colon, {
+  status <- ifelse(`surv_mm`>120.5,1,status)
+  tm <- pmin(`surv_mm`,120.5)/12
+  exit <- dx+tm*365.25
+  sex <- as.numeric(sex)
+  X_age <- pmin(floor(age+tm),99)
+  X_year <- floor(yydx+tm)
+})
+colon2 <- merge(colon2,popmort2)
+
+## compare relative survival without and with cure 
+summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
+                     data=colon2,
+                     bhazard=colon2$rate, df=6)) ## CHECKED: same year8594 estimate as Stata
+head(predict(fit))
+## estimate of failure at the end of follow-up
+1-predict(fit,data.frame(year8594 = unique(colon2$year8594),tm=max(colon2$tm)),type="surv",se.fit=TRUE)
+par(mfrow=1:2)
+plot(fit,newdata=data.frame(year8594 = "Diagnosed 85-94"),ylim=0:1)
+plot(fit,newdata=data.frame(year8594 = "Diagnosed 75-84"),add=TRUE,line.col="red",rug=FALSE)
+##
 summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
                      data=colon2,
                      bhazard=colon2$rate,
-                     logH.formula=~nsx(log(tm),df=5,cure=TRUE,stata=TRUE))) # oops
+                     logH.formula=~nsx(log(tm),df=5,cure=TRUE)))
 head(predict(fit))
-plot(fit,newdata=data.frame(hormon=1))
-plot(fit,newdata=data.frame(hormon=1),type="hazard")
-plot(fit,newdata=data.frame(hormon=1),type="cumhaz")
+## cure fractions (I need to add this to the predict function)
+1-predict(fit,data.frame(year8594 = unique(colon2$year8594),tm=max(colon2$tm)),type="surv",se.fit=TRUE)
+newdata1 <- data.frame(year8594 = "Diagnosed 85-94")
+plot(fit,newdata=newdata1,ylim=0:1)
+plot(fit,newdata=data.frame(year8594="Diagnosed 75-84"),add=TRUE,rug=FALSE,line.col="red")
+## ERROR: the curves are NOT comparable
 
+
+plot(fit,newdata=newdata1,type="hazard")
+plot(fit,newdata=newdata1,type="cumhaz")
+
+
+## http://www.pauldickman.com/survival/r/melanoma.relsurv.r
+library(foreign)
+library(survival)
+library(relsurv)
+# Download rates files from http://www.mortality.org/
+# # 6. Life Tables By year of death (period) 1x1
+# Save tables by gender in text files
+# The transrate.hmd command translate these to R ratetables
+Finlandpop <- transrate.hmd("c:/usr/tmp/mltper_1x1.txt","c:/usr/tmp/fltper_1x1.txt")
+
+## The relsurv package requires time in days (exit and dx are dates of exit and diagnosis)
+colon3 <- transform(colon2,tm.dd=as.numeric(exit-dx))
+colon3$sex <- ifelse(colon2$sex==1,"male","female")
+as.date <- function(x)
+  if (inherits(x,"Date")) as.date(as.numeric(x)+3653) else date::as.date(x)
+model1 <- rs.surv(Surv(tm.dd,status %in% 2:3)~year8594+ratetable(age=(X_age+0.5)*365.25,sex=sex,year=as.date(exit)),colon3,ratetable=Finlandpop)
+plot(model1,lty=1:2)
+
+
+
+                 
 oldx <- 0:100
 oldy <- (oldx-50)^2
 oldy[c(20,30)] <- 0
