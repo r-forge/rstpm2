@@ -993,7 +993,7 @@ incrVar <- function(var,increment=1) {
 }
 setMethod("plot", signature(x="stpm2", y="missing"),
           function(x,y,newdata,type="surv",
-                      xlab="Time",line.col=1,ci.col="grey",
+                      xlab="Time",line.col=1,ci.col="grey",lty=par("lty"),
                       add=FALSE,ci=TRUE,rug=TRUE,
                       var=NULL,...) {
   y <- predict(x,newdata,type=type,var=var,grid=TRUE,se.fit=TRUE)
@@ -1003,7 +1003,7 @@ setMethod("plot", signature(x="stpm2", y="missing"),
   xx <- xx[,ncol(xx)]
   if (!add) matplot(xx, y, type="n", xlab=xlab, ylab=ylab, ...)
   if (ci) polygon(c(xx,rev(xx)), c(y[,2],rev(y[,3])), col=ci.col, border=ci.col)
-  lines(xx,y[,1],col=line.col)
+  lines(xx,y[,1],col=line.col,lty=lty)
   if (rug) {
       Y <- x@y
       eventTimes <- Y[Y[,ncol(Y)]==1,ncol(Y)-1]
@@ -1139,28 +1139,25 @@ colon2 <- within(colon, {
 colon2 <- merge(colon2,popmort2)
 
 ## compare relative survival without and with cure 
-summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
+summary(fit0 <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
                      data=colon2,
-                     bhazard=colon2$rate, df=6)) ## CHECKED: same year8594 estimate as Stata
-head(predict(fit))
+                     bhazard=colon2$rate, df=5)) ## CHECKED: same year8594 estimate as Stata
+head(predict(fit0))
 ## estimate of failure at the end of follow-up
-1-predict(fit,data.frame(year8594 = unique(colon2$year8594),tm=max(colon2$tm)),type="surv",se.fit=TRUE)
-par(mfrow=1:2)
-plot(fit,newdata=data.frame(year8594 = "Diagnosed 85-94"),ylim=0:1)
-plot(fit,newdata=data.frame(year8594 = "Diagnosed 75-84"),add=TRUE,line.col="red",rug=FALSE)
+1-predict(fit0,data.frame(year8594 = unique(colon2$year8594),tm=max(colon2$tm)),type="surv",se.fit=TRUE)
+plot(fit0,newdata=data.frame(year8594 = "Diagnosed 85-94"),ylim=0:1)
+plot(fit0,newdata=data.frame(year8594 = "Diagnosed 75-84"),add=TRUE,line.col="red",rug=FALSE)
 ##
 summary(fit <- stpm2(Surv(tm,status %in% 2:3)~I(year8594=="Diagnosed 85-94"),
                      data=colon2,
                      bhazard=colon2$rate,
-                     logH.formula=~nsx(log(tm),df=5,cure=TRUE)))
+                     df=5,cure=TRUE))
 head(predict(fit))
 ## cure fractions (I need to add this to the predict function)
 1-predict(fit,data.frame(year8594 = unique(colon2$year8594),tm=max(colon2$tm)),type="surv",se.fit=TRUE)
 newdata1 <- data.frame(year8594 = "Diagnosed 85-94")
-plot(fit,newdata=newdata1,ylim=0:1)
-plot(fit,newdata=data.frame(year8594="Diagnosed 75-84"),add=TRUE,rug=FALSE,line.col="red")
-## ERROR: the curves are NOT comparable
-
+plot(fit,newdata=newdata1,add=TRUE,ci=FALSE,lty=2,rug=FALSE)
+plot(fit,newdata=data.frame(year8594="Diagnosed 75-84"),add=TRUE,rug=FALSE,line.col="red",ci=FALSE,lty=2)
 
 plot(fit,newdata=newdata1,type="hazard")
 plot(fit,newdata=newdata1,type="cumhaz")
