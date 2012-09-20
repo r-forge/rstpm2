@@ -64,7 +64,7 @@ stpm2 hormon, df(3) scale(h)
 timer off 1
 timer list
 
-
+** Cure
 * http://www.pauldickman.com/survival/solutions/q37.do
 clear
 use "http://www.pauldickman.com/survival/colon.dta"
@@ -76,8 +76,8 @@ merge m:1 _year sex _age using "http://www.pauldickman.com/survival/popmort.dta"
 
 ** Cure model using stpm2 **
 stpm2 year8594, df(6) bhazard(rate) scale(hazard) cure 
-predict surv, surv
-list surv* in 1/5
+predict surv, surv ci
+list surv surv_lci surv_uci in 1/6
 
 stpm2 year8594, df(6) bhazard(rate) scale(hazard)  
 stpm2 year8594, df(6) scale(hazard)  

@@ -627,11 +627,11 @@ setClass("stpm2", representation(xlevels="list",
 ## nsx(1:10,df=4,cure=T)
 
 stpm2 <- function(formula, data,
-                  df=3, logH.args=NULL, logH.formula=NULL,
-                  tvc=NULL, tvc.formula=NULL,
-                  control=list(parscale=0.1,maxit=300), init=FALSE,
-                  coxph.strata=NULL, weights=NULL, robust=FALSE,
-                  bhazard=NULL, contrasts=NULL, subset=NULL, ...)
+                  df = 3, cure = FALSE, logH.args = NULL, logH.formula = NULL,
+                  tvc = NULL, tvc.formula = NULL,
+                  control = list(parscale = 0.1, maxit = 300), init = FALSE,
+                  coxph.strata = NULL, weights = NULL, robust = FALSE,
+                  bhazard = NULL, contrasts = NULL, subset = NULL, ...)
   {
     Call <- match.call()
     mf <- match.call(expand.dots = FALSE)
@@ -644,8 +644,10 @@ stpm2 <- function(formula, data,
     delayed <- length(lhs(formula))==4
     timevar <- lhs(formula)[[if (delayed) 3 else 2]]
     ## set up the formulae
-    if (is.null(logH.formula) && is.null(logH.args))
+    if (is.null(logH.formula) && is.null(logH.args)) {
       logH.args$df <- df
+      logH.args$cure <- cure
+    }
     if (!is.null(logH.args) && is.null(logH.args$log))
       logH.args$log <- TRUE
     if (is.null(logH.formula))
@@ -660,7 +662,7 @@ stpm2 <- function(formula, data,
                     as.name(name),
                     as.call(c(quote(nsx),
                               call("log",timevar),
-                              vector2call(list(log=TRUE,df=tvc[[name]]))))))
+                              vector2call(list(log=TRUE,cure=cure,df=tvc[[name]]))))))
       if (length(tvc.formulas)>1)
         tvc.formulas <- list(Reduce(`%call+%`, tvc.formulas))
       tvc.formula <- as.formula(call("~",tvc.formulas[[1]]))
