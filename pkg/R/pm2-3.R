@@ -995,12 +995,13 @@ incrVar <- function(var,increment=1) {
 }
 setMethod("plot", signature(x="stpm2", y="missing"),
           function(x,y,newdata,type="surv",
-                      xlab="Time",line.col=1,ci.col="grey",lty=par("lty"),
+                      xlab="Time",ylab=NULL,line.col=1,ci.col="grey",lty=par("lty"),
                       add=FALSE,ci=TRUE,rug=TRUE,
                       var=NULL,...) {
   y <- predict(x,newdata,type=type,var=var,grid=TRUE,se.fit=TRUE)
-  ylab <- switch(type,hr="Hazard ratio",hazard="Hazard",surv="Survival",
-                 sdiff="Survival difference",hdiff="Hazard difference",cumhaz="Cumulative hazard")
+  if (is.null(ylab))
+    ylab <- switch(type,hr="Hazard ratio",hazard="Hazard",surv="Survival",
+                   sdiff="Survival difference",hdiff="Hazard difference",cumhaz="Cumulative hazard")
   xx <- attr(y,"newdata")
   xx <- xx[,ncol(xx)]
   if (!add) matplot(xx, y, type="n", xlab=xlab, ylab=ylab, ...)
@@ -1126,23 +1127,25 @@ summary(fit.tvc <- stpm2(Surv(rectime,censrec==1)~hormon,data=brcancer,df=3,
 ## cure model
 ## cf. http://www.pauldickman.com/survival/solutions/q37.do
 ### Data setup
-## require(foreign)
-## colon <- read.dta("http://www.pauldickman.com/survival/colon.dta")
-## popmort <- read.dta("http://www.pauldickman.com/survival/popmort.dta")
-## brcancer <- read.dta("http://www.stata-press.com/data/r11/brcancer.dta")
-## save(colon,file="c:/usr/src/R/rstpm2/pkg/data/colon.rda")
-## save(popmort,file="c:/usr/src/R/rstpm2/pkg/data/popmort.rda")
-## save(brcancer,file="c:/usr/src/R/rstpm2/pkg/data/brcancer.rda")
+require(foreign)
+colon <- read.dta("http://www.pauldickman.com/survival/colon.dta")
+popmort <- read.dta("http://www.pauldickman.com/survival/popmort.dta")
+brcancer <- read.dta("http://www.stata-press.com/data/r11/brcancer.dta")
+popmort <- transform(popmort, age=`_age`, year=`_year`, `_age`=NULL, `_year`=NULL)
+
+save(colon,file="c:/usr/src/R/rstpm2/pkg/data/colon.rda")
+save(popmort,file="c:/usr/src/R/rstpm2/pkg/data/popmort.rda")
+save(brcancer,file="c:/usr/src/R/rstpm2/pkg/data/brcancer.rda")
 
 require(rstpm2)
-popmort2 <- transform(popmort, X_age=`_age`, X_year=`_year`)
+popmort2 <- transform(popmort,exitage=age,exityear=year,age=NULL,year=NULL)
 colon2 <- within(colon, {
-  status <- ifelse(`surv_mm`>120.5,1,status)
-  tm <- pmin(`surv_mm`,120.5)/12
+  status <- ifelse(surv_mm>120.5,1,status)
+  tm <- pmin(surv_mm,120.5)/12
   exit <- dx+tm*365.25
   sex <- as.numeric(sex)
-  X_age <- pmin(floor(age+tm),99)
-  X_year <- floor(yydx+tm)
+  exitage <- pmin(floor(age+tm),99)
+  exityear <- floor(yydx+tm)
 })
 colon2 <- merge(colon2,popmort2)
 
