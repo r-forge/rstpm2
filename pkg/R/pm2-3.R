@@ -631,11 +631,11 @@ stpm2 <- function(formula, data,
                   tvc = NULL, tvc.formula = NULL,
                   control = list(parscale = 0.1, maxit = 300), init = FALSE,
                   coxph.strata = NULL, weights = NULL, robust = FALSE,
-                  bhazard = NULL, contrasts = NULL, subset = NULL, ...)
+                  bhazard = NULL, contrasts = NULL, subset = NULL, na.action, ...)
   {
     Call <- match.call()
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "contrasts", "weights"),
+    m <- match(c("formula", "data", "subset", "contrasts", "weights", "na.action"),
                names(mf), 0L)
     mf <- mf[c(1L, m)]
     ## mf$drop.unused.levels <- TRUE # include?
