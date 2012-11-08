@@ -725,12 +725,16 @@ stpm2 <- function(formula, data,
     coxph.obj <- eval(coxph.obj)
     ## coxph.obj <- eval.parent(substitute(coxph(formula,data),
     ##                                     list(formula=formula,data=data)))
-    data$logHhat <- pmax(-18,log(-log(Shat(coxph.obj))))
+    coxph.data <- coxph.obj$model
+    coxph.data$logHhat <- pmax(-18,log(-log(Shat(coxph.obj))))
+    coxph.data[,1] <- time
+    names(coxph.data)[1] <- as.character(timevar)
     ##
     lm.formula <- full.formula
     lhs(lm.formula) <- quote(logHhat) # new response
     if (!init) {
-      lm.obj <- lm(lm.formula,data[event,],contrasts=contrasts)
+      lm.obj <- lm(lm.formula,coxph.data[event,],contrasts=contrasts,na.action=na.action)
+      ## lm.obj <- lm(lm.formula,data[event,],contrasts=contrasts,na.action=na.action)
       lm.obj$weights <- substitute(weights)
       lm.obj <- eval(lm.obj)
       init <- coef(lm.obj)
