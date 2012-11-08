@@ -720,7 +720,7 @@ stpm2 <- function(formula, data,
     coxph.formula <- formula
     if (!is.null(coxph.strata)) 
       rhs(coxph.formula) <- rhs(formula) %call+% call("strata",coxph.strata)
-    coxph.obj <- quote(coxph(coxph.formula,data=data,model=TRUE))
+    coxph.obj <- quote(coxph(coxph.formula,data=data,model=TRUE,na.action=na.action))
     coxph.obj$weights <- substitute(weights)
     coxph.obj <- eval(coxph.obj)
     ## coxph.obj <- eval.parent(substitute(coxph(formula,data),
