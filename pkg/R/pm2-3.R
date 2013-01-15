@@ -631,11 +631,19 @@ stpm2 <- function(formula, data,
                   tvc = NULL, tvc.formula = NULL,
                   control = list(parscale = 0.1, maxit = 300), init = FALSE,
                   coxph.strata = NULL, weights = NULL, robust = FALSE,
-                  bhazard = NULL, contrasts = NULL, subset = NULL, na.action, ...)
+                  bhazard = NULL, contrasts = NULL, subset = NULL, ...)
   {
+    ## ensure that data is a data frame
+    data <- get_all_vars(formula, data)
+    ## restrict to non-missing data (assumes na.action=na.omit)
+    .include <- Reduce(`&`,
+                       lapply(model.frame(formula, data, na.action=na.pass),
+                              Negate(is.na)),
+                       TRUE)
+    data <- data[.include, , drop=FALSE]
     Call <- match.call()
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "contrasts", "weights", "na.action"),
+    m <- match(c("formula", "data", "subset", "contrasts", "weights"),
                names(mf), 0L)
     mf <- mf[c(1L, m)]
     ## mf$drop.unused.levels <- TRUE # include?
@@ -677,7 +685,8 @@ stpm2 <- function(formula, data,
     ## set up primary terms objects (mt and mtd)
     mf$formula = full.formula
     ## mf$subset <- eventExpression # call("&",call("(",eventExpression),call("(",substitute(subset)))
-    datae <- eval(call("subset",substitute(data),eventExpression),parent.frame()) # data required?
+    ##datae <- eval(call("subset",substitute(data),eventExpression),parent.frame()) # data required?
+    datae <- data[eval(eventExpression,data)==1, , drop=FALSE]
     mf$data <- quote(datae) # restricted to event times
     mfX <- mfd <- mf # copy
     ## mf <- eval(mf, parent.frame())
@@ -720,12 +729,12 @@ stpm2 <- function(formula, data,
     coxph.formula <- formula
     if (!is.null(coxph.strata)) 
       rhs(coxph.formula) <- rhs(formula) %call+% call("strata",coxph.strata)
-    coxph.obj <- quote(coxph(coxph.formula,data=data,model=TRUE,na.action=na.action))
+    coxph.obj <- quote(coxph(coxph.formula,data=data,model=TRUE))
     coxph.obj$weights <- substitute(weights)
     coxph.obj <- eval(coxph.obj)
     ## coxph.obj <- eval.parent(substitute(coxph(formula,data),
     ##                                     list(formula=formula,data=data)))
-    coxph.data <- coxph.obj$model
+    coxph.data <- get_all_vars(mfX)
     coxph.data$logHhat <- pmax(-18,log(-log(Shat(coxph.obj))))
     coxph.data[,1] <- time
     names(coxph.data)[1] <- as.character(timevar)
@@ -733,8 +742,8 @@ stpm2 <- function(formula, data,
     lm.formula <- full.formula
     lhs(lm.formula) <- quote(logHhat) # new response
     if (!init) {
-      lm.obj <- lm(lm.formula,coxph.data[event,],contrasts=contrasts,na.action=na.action)
-      ## lm.obj <- lm(lm.formula,data[event,],contrasts=contrasts,na.action=na.action)
+      lm.obj <- lm(lm.formula,coxph.data[event,],contrasts=contrasts)
+      ## lm.obj <- lm(lm.formula,data[event,],contrasts=contrasts)
       lm.obj$weights <- substitute(weights)
       lm.obj <- eval(lm.obj)
       init <- coef(lm.obj)
