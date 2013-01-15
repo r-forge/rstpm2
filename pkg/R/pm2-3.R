@@ -467,6 +467,12 @@ vector2call=function(obj) {
   lapply(obj,allCall) # is this correct?
 }
 ## vector2call(list(df=3,knots=c(1,2)))
+findSymbol <- function(obj,symbol) {
+  if (is.symbol(obj) && obj==symbol) T else
+  if (is.symbol(obj)) F else
+  if (is.atomic(obj)) F else
+  Reduce(`|`,lapply(obj,findSymbol,symbol),FALSE)
+}
 rhs=function(formula) 
   if (length(formula)==3) formula[[3]] else formula[[2]]
 lhs <- function(formula) 
@@ -622,9 +628,9 @@ setClass("stpm2", representation(xlevels="list",
                                  y="Surv"
                                  ),
          contains="mle2")
-
 ## debug(nsx)
 ## nsx(1:10,df=4,cure=T)
+
 
 stpm2 <- function(formula, data,
                   df = 3, cure = FALSE, logH.args = NULL, logH.formula = NULL,
@@ -650,7 +656,9 @@ stpm2 <- function(formula, data,
     mf[[1L]] <- as.name("model.frame")
     eventExpression <- lhs(formula)[[length(lhs(formula))]]
     delayed <- length(lhs(formula))==4
-    timevar <- lhs(formula)[[if (delayed) 3 else 2]]
+    timeExpr <- lhs(formula)[[if (delayed) 3 else 2]] # expression
+    timeVar <- all.vars(timeExpr)
+    stopifnot(length(timeVar)==1)
     ## set up the formulae
     if (is.null(logH.formula) && is.null(logH.args)) {
       logH.args$df <- df
@@ -659,7 +667,7 @@ stpm2 <- function(formula, data,
     if (!is.null(logH.args) && is.null(logH.args$log))
       logH.args$log <- TRUE
     if (is.null(logH.formula))
-      logH.formula <- as.formula(call("~",as.call(c(quote(nsx),call("log",timevar),
+      logH.formula <- as.formula(call("~",as.call(c(quote(nsx),call("log",timeExpr),
                                                     vector2call(logH.args)))))
     full.formula <- formula
     rhs(full.formula) <- rhs(formula) %call+% rhs(logH.formula)
@@ -669,36 +677,30 @@ stpm2 <- function(formula, data,
                call(":",
                     as.name(name),
                     as.call(c(quote(nsx),
-                              call("log",timevar),
+                              call("log",timeExpr),
                               vector2call(list(log=TRUE,cure=cure,df=tvc[[name]]))))))
       if (length(tvc.formulas)>1)
         tvc.formulas <- list(Reduce(`%call+%`, tvc.formulas))
       tvc.formula <- as.formula(call("~",tvc.formulas[[1]]))
     }
-    if (!is.null(tvc.formula))
-      rhs(full.formula) <- rhs(full.formula) %call+% rhs(tvc.formula)
-    logHD.formula <- replaceFormula(logH.formula,quote(nsx),quote(nsxDeriv))
     if (!is.null(tvc.formula)) {
-      tvcD.formula <- replaceFormula(tvc.formula,quote(nsx),quote(nsxDeriv))
-      rhs(logHD.formula) <- logHD.formula[[2]] %call+% tvcD.formula[[2]]
+      rhs(full.formula) <- rhs(full.formula) %call+% rhs(tvc.formula)
+      rhs(logH.formula) <- rhs(logH.formula) %call+% rhs(tvc.formula)
     }
+    ## differentiation would be easier if we did not have functions for log(time)
+    logHD.formula <- replaceFormula(logH.formula,quote(nsx),quote(nsxDeriv))
     ## set up primary terms objects (mt and mtd)
     mf$formula = full.formula
-    ## mf$subset <- eventExpression # call("&",call("(",eventExpression),call("(",substitute(subset)))
-    ##datae <- eval(call("subset",substitute(data),eventExpression),parent.frame()) # data required?
     datae <- data[eval(eventExpression,data)==1, , drop=FALSE]
     mf$data <- quote(datae) # restricted to event times
     mfX <- mfd <- mf # copy
-    ## mf <- eval(mf, parent.frame())
     mf <- eval(mf)
     mt <- attr(mf, "terms") # primary!
     xlev <- .getXlevels(mt, mf)
     mfd[[2]] <- logHD.formula
-    ## mfd <- eval(mfd, parent.frame())
     mfd <- eval(mfd)
     mtd <- attr(mfd, "terms") # primary!
     ## design matrices
-    ## mfX <- model.frame(mt, data, xlev = xlev, weights = weights)
     mfX$formula <- quote(mt)
     mfX$data <- quote(data)
     mfX2 <- mfXD <- mfX # copies
@@ -736,8 +738,9 @@ stpm2 <- function(formula, data,
     ##                                     list(formula=formula,data=data)))
     coxph.data <- get_all_vars(mfX)
     coxph.data$logHhat <- pmax(-18,log(-log(Shat(coxph.obj))))
-    coxph.data[,1] <- time
-    names(coxph.data)[1] <- as.character(timevar)
+    coxph.data[[timeVar]] <- data[[timeVar]]
+    ## coxph.data[,1] <- time
+    ## names(coxph.data)[1] <- as.character(timeExpr)
     ##
     lm.formula <- full.formula
     lhs(lm.formula) <- quote(logHhat) # new response
@@ -748,14 +751,24 @@ stpm2 <- function(formula, data,
       lm.obj <- eval(lm.obj)
       init <- coef(lm.obj)
     }
-    indexXD <- (length(coef(coxph.obj))+2):ncol(X)
+    ## indexXD <- (length(coef(coxph.obj))+2):ncol(X)
+    indexXD <- grep(timeVar,names(init)) ## FRAUGHT: pattern-matching on names
+    ## data2 <- data
+    ## data2[[timeVar]] <- data[[timeVar]]+1e-3
+    ## temp <- predict(full.formula,data,data)
+    ## temp2 <- predict(full.formula,data,data2)
+    ## indexXD <- apply(apply(temp2-temp,2,range),2,diff)>1e-8
     bhazard <- if (is.null(bhazard)) 0 else bhazard[event] # crude
     if (delayed && any(y[,1]>0)) {
       data2 <- data[y[,1]>0,,drop=FALSE] # data for delayed entry times
       mt2 <- delete.response(mt)
-      ## hack: copy over times - so we can use the same term object
-      y.names <- sapply(lhs(full.formula),deparse)
-      data2[[y.names[3]]] <- data2[[y.names[2]]] 
+      ## copy over times - so we can use the same term object
+      timeExpr0 <- lhs(full.formula)[[2]] # expression
+      timeVar0 <- all.vars(timeExpr0)
+      stopifnot(length(timeVar0)==1)
+      data2[[timeVar]] <- data2[[timeVar0]] 
+      ##y.names <- sapply(lhs(full.formula),deparse)
+      ##data2[[y.names[3]]] <- data2[[y.names[2]]] 
       ## data2[[y.names[2]]] <- 0
       mfX2$formula <- quote(mt2)
       mfX2$data <- quote(data2)
