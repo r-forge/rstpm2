@@ -636,7 +636,7 @@ stpm2 <- function(formula, data,
                   df = 3, cure = FALSE, logH.args = NULL, logH.formula = NULL,
                   tvc = NULL, tvc.formula = NULL,
                   control = list(parscale = 0.1, maxit = 300), init = FALSE,
-                  coxph.strata = NULL, weights = NULL, robust = FALSE,
+                  coxph.strata = NULL, weights = NULL, robust = FALSE, baseoff = FALSE,
                   bhazard = NULL, contrasts = NULL, subset = NULL, ...)
   {
     ## ensure that data is a data frame
@@ -662,15 +662,13 @@ stpm2 <- function(formula, data,
     ## set up the formulae
     if (is.null(logH.formula) && is.null(logH.args)) {
       logH.args$df <- df
-      logH.args$cure <- cure
+      if (cure) logH.args$cure <- cure
     }
     if (!is.null(logH.args) && is.null(logH.args$log))
       logH.args$log <- TRUE
     if (is.null(logH.formula))
       logH.formula <- as.formula(call("~",as.call(c(quote(nsx),call("log",timeExpr),
                                                     vector2call(logH.args)))))
-    full.formula <- formula
-    rhs(full.formula) <- rhs(formula) %call+% rhs(logH.formula)
     if (is.null(tvc.formula) && !is.null(tvc)) {
       tvc.formulas <-
         lapply(names(tvc), function(name)
@@ -684,9 +682,12 @@ stpm2 <- function(formula, data,
       tvc.formula <- as.formula(call("~",tvc.formulas[[1]]))
     }
     if (!is.null(tvc.formula)) {
-      rhs(full.formula) <- rhs(full.formula) %call+% rhs(tvc.formula)
       rhs(logH.formula) <- rhs(logH.formula) %call+% rhs(tvc.formula)
     }
+    if (baseoff)
+      rhs(logH.formula) <- rhs(tvc.formula)
+    full.formula <- formula
+    rhs(full.formula) <- rhs(formula) %call+% rhs(logH.formula)
     ## differentiation would be easier if we did not have functions for log(time)
     logHD.formula <- replaceFormula(logH.formula,quote(nsx),quote(nsxDeriv))
     ## set up primary terms objects (mt and mtd)
@@ -751,13 +752,13 @@ stpm2 <- function(formula, data,
       lm.obj <- eval(lm.obj)
       init <- coef(lm.obj)
     }
-    ## indexXD <- (length(coef(coxph.obj))+2):ncol(X)
-    indexXD <- grep(timeVar,names(init)) ## FRAUGHT: pattern-matching on names
-    ## data2 <- data
-    ## data2[[timeVar]] <- data[[timeVar]]+1e-3
-    ## temp <- predict(full.formula,data,data)
-    ## temp2 <- predict(full.formula,data,data2)
-    ## indexXD <- apply(apply(temp2-temp,2,range),2,diff)>1e-8
+    ## indexXD <- grep(timeVar,names(init)) ## FRAUGHT: pattern-matching on names
+    data2 <- data
+    data2[[timeVar]] <- data[[timeVar]]+1e-3
+    temp <- predict(full.formula,data,data)
+    temp2 <- predict(full.formula,data,data2)
+    indexXD <- apply(apply(temp2-temp,2,range),2,diff)>1e-8
+    rm(data2,temp,temp2)
     bhazard <- if (is.null(bhazard)) 0 else bhazard[event] # crude
     if (delayed && any(y[,1]>0)) {
       data2 <- data[y[,1]>0,,drop=FALSE] # data for delayed entry times
