@@ -774,11 +774,12 @@ stpm2 <- function(formula, data,
       mfX2$formula <- quote(mt2)
       mfX2$data <- quote(data2)
       mfX2 <- eval(mfX2)
-      wt2 <- model.weights(mfX2)
       ##mfX2 <- model.frame(mt2, data2, xlev=xlev, weights = weights)
       if (!is.null(cl <- attr(mt2, "dataClasses"))) 
         .checkMFClasses(cl, mfX2)
       X2 <- model.matrix(mt2, mfX2, contrasts)
+      wt2 <- model.weights(mfX2)
+      if (is.null(wt2)) wt2 <- rep(1,nrow(X2))
       ## delayed.formula <- full.formula
       ## lhs(delayed.formula) <- NULL
       ## X2 = predict(delayed.formula, data, data2) ## delayed entry
