@@ -43,7 +43,9 @@ echo $contents; } ?>
 
 <!-- end of project description -->
 
-<p> No content added. </p>
+<p> This is no longer the primary development site for rstpm2. 
+
+Please see <a href="https://github.com/mclements/rstpm2">. </p>
 
 <p> The <strong>project summary page</strong> you can find <a href="http://<?php echo $domain; ?>/projects/<?php echo $group_name; ?>/"><strong>here</strong></a>. </p>
 
